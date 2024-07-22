@@ -1,0 +1,4439 @@
+"make" -C gitlet default
+make[1]: Entering directory '/home/agx/Desktop/CS61B/CS61B/proj2/gitlet'
+make[1]: Nothing to be done for 'default'.
+make[1]: Leaving directory '/home/agx/Desktop/CS61B/CS61B/proj2/gitlet'
+"make" -C testing PYTHON=python3 TESTER_FLAGS="--verbose" check
+make[1]: Entering directory '/home/agx/Desktop/CS61B/CS61B/proj2/testing'
+Testing application gitlet.Main...
+CLASSPATH="$(pwd)/..::;$(pwd)/..;" python3 tester.py --verbose samples/*.in student_tests/*.in *.in
+test01-init:
+Testing directory: test01-init_0
++ # Basic initialization
++ > init
++ E .gitlet
+OK
+test02-basic-checkout:
+Testing directory: test02-basic-checkout_0
++ # A simple test of adding, committing, modifying, and checking out.
++ > init
++ + wug.txt wug.txt
++ > add wug.txt
++ > commit "added wug"
++ + wug.txt notwug.txt
++ # Must change
++ > checkout -- wug.txt
++ = wug.txt wug.txt
+OK
+test03-basic-log:
+Testing directory: test03-basic-log_0
++ # Set up a simple chain of commits and check their log.
++ I definitions.inc
++ # Standard definitions
++ D DATE "Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A status log header RE.  Captures the commit id in its sole group.
++ D COMMIT_HEAD "commit ([a-f0-9]+)[ \t]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]  *\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A full log entry.  Captures the entry. Assume logs messages don't contain
++ # "==="
++ D COMMIT_LOG "(===[ ]*\ncommit [a-f0-9]+[ ]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d[ ]*\n(?:.|\n)*?(?=\Z|\n===))"
++ # An arbitrary line of text (works even with ?s)
++ D ARBLINE "[^\n]*(?=\n|\Z)"
++ # Zero or more arbitrary full lines of text.
++ D ARBLINES "(?:(?:.|\n)*(?:\n|\Z)|\A|\Z)"
++ > init
++ + wug.txt wug.txt
++ > add wug.txt
++ > commit "added wug"
++ > log
+- ===
+- commit a9a5b633fd53a14fa145053aa30390e34aa628f7
+- Date: Thu Jul 18 17:31:26 2024 +0300
+- added wug
+- 
+- ===
+- commit f7011bb0c9d9a16990818994b29775d3593e45e2
+- Date: Thu Jan 1 02:00:00 1970 +0200
+- initial commit
+- 
+OK
+test04-prev-checkout:
+Testing directory: test04-prev-checkout_0
++ # Check that we can check out a previous version.
++ I definitions.inc
++ # Standard definitions
++ D DATE "Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A status log header RE.  Captures the commit id in its sole group.
++ D COMMIT_HEAD "commit ([a-f0-9]+)[ \t]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]  *\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A full log entry.  Captures the entry. Assume logs messages don't contain
++ # "==="
++ D COMMIT_LOG "(===[ ]*\ncommit [a-f0-9]+[ ]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d[ ]*\n(?:.|\n)*?(?=\Z|\n===))"
++ # An arbitrary line of text (works even with ?s)
++ D ARBLINE "[^\n]*(?=\n|\Z)"
++ # Zero or more arbitrary full lines of text.
++ D ARBLINES "(?:(?:.|\n)*(?:\n|\Z)|\A|\Z)"
++ > init
++ + wug.txt wug.txt
++ > add wug.txt
++ > commit "version 1 of wug.txt"
++ + wug.txt notwug.txt
++ > add wug.txt
++ > commit "version 2 of wug.txt"
++ = wug.txt notwug.txt
++ # Each ${COMMIT_HEAD} captures its commit UID.
++ > log
+- ===
+- commit c5236107ebe9c5c865e50f009a6eeb09c399f86e
+- Date: Thu Jul 18 17:31:26 2024 +0300
+- version 2 of wug.txt
+- 
+- ===
+- commit 0a4b9e7de078333713063ec78838c04020bcedc6
+- Date: Thu Jul 18 17:31:26 2024 +0300
+- version 1 of wug.txt
+- 
+- ===
+- commit f7011bb0c9d9a16990818994b29775d3593e45e2
+- Date: Thu Jan 1 02:00:00 1970 +0200
+- initial commit
+- 
++ # UID of second version
++ D UID2 "c5236107ebe9c5c865e50f009a6eeb09c399f86e"
++ # UID of current version
++ D UID1 "0a4b9e7de078333713063ec78838c04020bcedc6"
++ > checkout 0a4b9e7de078333713063ec78838c04020bcedc6 -- wug.txt
++ = wug.txt wug.txt
++ > checkout c5236107ebe9c5c865e50f009a6eeb09c399f86e -- wug.txt
++ = wug.txt notwug.txt
+OK
+test05-bad-checkouts-err:
+Testing directory: test05-bad-checkouts-err_0
++ # Check that we can check out a previous version.
++ I definitions.inc
++ # Standard definitions
++ D DATE "Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A status log header RE.  Captures the commit id in its sole group.
++ D COMMIT_HEAD "commit ([a-f0-9]+)[ \t]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A full log entry.  Captures the entry. Assume logs messages don't contain
++ # "==="
++ D COMMIT_LOG "(===[ ]*\ncommit [a-f0-9]+[ ]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d[ ]*\n(?:.|\n)*?(?=\Z|\n===))"
++ # An arbitrary line of text (works even with ?s)
++ D ARBLINE "[^\n]*(?=\n|\Z)"
++ # Zero or more arbitrary full lines of text.
++ D ARBLINES "(?:(?:.|\n)*(?:\n|\Z)|\A|\Z)"
++ > init
++ + wug.txt wug.txt
++ > add wug.txt
++ > commit "version 1 of wug.txt"
++ + wug.txt notwug.txt
++ > add wug.txt
++ > commit "version 2 of wug.txt"
++ > log
+- ===
+- commit 575fbf0f26f2248d7f9f5ec3dccdf9f24b537e16
+- Date: Thu Jul 18 17:31:27 2024 +0300
+- version 2 of wug.txt
+- 
+- ===
+- commit 54e261edb0105f52398f143a6fc64eab1494b051
+- Date: Thu Jul 18 17:31:27 2024 +0300
+- version 1 of wug.txt
+- 
+- ===
+- commit f7011bb0c9d9a16990818994b29775d3593e45e2
+- Date: Thu Jan 1 02:00:00 1970 +0200
+- initial commit
+- 
++ # UID of second version
++ D UID2 "575fbf0f26f2248d7f9f5ec3dccdf9f24b537e16"
++ # UID of first version
++ D UID1 "54e261edb0105f52398f143a6fc64eab1494b051"
++ > checkout 575fbf0f26f2248d7f9f5ec3dccdf9f24b537e16 -- warg.txt
+- File does not exist in that commit.
++ > checkout 5d0bc169a1737e955f9cb26b9e7aa21e4afd4d12 -- wug.txt
+- No commit with that id exists.
+- Exception in thread "main" java.lang.AssertionError
+- 	at gitlet.Repository.checkout(Repository.java:413)
+- 	at gitlet.Main.main(Main.java:119)
+ERROR (java gitlet.Main exited with code 1)
+test06-global-log:
+Testing directory: test06-global-log_0
++ #Check global log
++ 
++ I commit-2-files.inc
++ # Commit two files.
++ I init-add-2-files.inc
++ I definitions.inc
++ # Standard definitions
++ D DATE "Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A status log header RE.  Captures the commit id in its sole group.
++ D COMMIT_HEAD "commit ([a-f0-9]+)[ \t]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A full log entry.  Captures the entry. Assume logs messages don't contain
++ # "==="
++ D COMMIT_LOG "(===[ ]*\ncommit [a-f0-9]+[ ]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d[ ]*\n(?:.|\n)*?(?=\Z|\n===))"
++ # An arbitrary line of text (works even with ?s)
++ D ARBLINE "[^\n]*(?=\n|\Z)"
++ # Zero or more arbitrary full lines of text.
++ D ARBLINES "(?:(?:.|\n)*(?:\n|\Z)|\A|\Z)"
++ > init
++ + f.txt wug.txt
++ + g.txt notwug.txt
++ > add g.txt
++ > add f.txt
++ > commit "Two files"
++ 
++ D DATE1 "Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d"
++ D COMMIT_LOG "(===[ ]*\ncommit [a-f0-9]+[ ]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d) [-+](\d\d\d\d[ ]*\n(?:.|\n)*?(?=\Z|\n===))"
++ + h.txt wug.txt
++ > add h.txt
++ > commit "Add h"
++ > log
+- ===
+- commit 8e1a6fa6102d92eef0dd09182472d8ed84832a7b
+- Date: Thu Jul 18 17:31:28 2024 +0300
+- Add h
+- 
+- ===
+- commit a29198b8e8862100ea56f3e3cc7384334a49b129
+- Date: Thu Jul 18 17:31:28 2024 +0300
+- Two files
+- 
+- ===
+- commit f7011bb0c9d9a16990818994b29775d3593e45e2
+- Date: Thu Jan 1 02:00:00 1970 +0200
+- initial commit
+- 
++ D L1 "===
+commit 8e1a6fa6102d92eef0dd09182472d8ed84832a7b
+Date: Thu Jul 18 17:31:28 2024 [-+]0300
+Add h
+"
++ D L2 "===
+commit a29198b8e8862100ea56f3e3cc7384334a49b129
+Date: Thu Jul 18 17:31:28 2024 [-+]0300
+Two files
+"
++ D L3 "===
+commit f7011bb0c9d9a16990818994b29775d3593e45e2
+Date: Thu Jan 1 02:00:00 1970 [-+]0200
+initial commit
+
+"
++ > global-log
+- ===
+- commit 8e1a6fa6102d92eef0dd09182472d8ed84832a7b
+- Date: Thu Jul 18 17:31:28 2024 +0300
+- Add h
+- 
+- ===
+- commit a29198b8e8862100ea56f3e3cc7384334a49b129
+- Date: Thu Jul 18 17:31:28 2024 +0300
+- Two files
+- 
+- ===
+- commit f7011bb0c9d9a16990818994b29775d3593e45e2
+- Date: Thu Jan 1 02:00:00 1970 +0200
+- initial commit
+- 
++ > global-log
+- ===
+- commit 8e1a6fa6102d92eef0dd09182472d8ed84832a7b
+- Date: Thu Jul 18 17:31:28 2024 +0300
+- Add h
+- 
+- ===
+- commit a29198b8e8862100ea56f3e3cc7384334a49b129
+- Date: Thu Jul 18 17:31:28 2024 +0300
+- Two files
+- 
+- ===
+- commit f7011bb0c9d9a16990818994b29775d3593e45e2
+- Date: Thu Jan 1 02:00:00 1970 +0200
+- initial commit
+- 
++ > global-log
+- ===
+- commit 8e1a6fa6102d92eef0dd09182472d8ed84832a7b
+- Date: Thu Jul 18 17:31:28 2024 +0300
+- Add h
+- 
+- ===
+- commit a29198b8e8862100ea56f3e3cc7384334a49b129
+- Date: Thu Jul 18 17:31:28 2024 +0300
+- Two files
+- 
+- ===
+- commit f7011bb0c9d9a16990818994b29775d3593e45e2
+- Date: Thu Jan 1 02:00:00 1970 +0200
+- initial commit
+- 
+OK
+test07-status-2-add:
+Testing directory: test07-status-2-add_0
++ # Status with two adds
++ I init-add-2-files.inc
++ I definitions.inc
++ # Standard definitions
++ D DATE "Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A status log header RE.  Captures the commit id in its sole group.
++ D COMMIT_HEAD "commit ([a-f0-9]+)[ \t]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A full log entry.  Captures the entry. Assume logs messages don't contain
++ # "==="
++ D COMMIT_LOG "(===[ ]*\ncommit [a-f0-9]+[ ]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d[ ]*\n(?:.|\n)*?(?=\Z|\n===))"
++ # An arbitrary line of text (works even with ?s)
++ D ARBLINE "[^\n]*(?=\n|\Z)"
++ # Zero or more arbitrary full lines of text.
++ D ARBLINES "(?:(?:.|\n)*(?:\n|\Z)|\A|\Z)"
++ > init
++ + f.txt wug.txt
++ + g.txt notwug.txt
++ > add g.txt
++ > add f.txt
++ > status
+- === Branches ===
+- *master
+- 
+- === Staged Files ===
+- f.txt
+- g.txt
+- 
+- === Removed Files ===
+- 
+- === Modifications Not Staged For Commit ===
+- 
+- === Untracked Files ===
+- 
++ 
+OK
+test08-untracked:
+Testing directory: test08-untracked_0
++ I definitions.inc
++ # Standard definitions
++ D DATE "Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A status log header RE.  Captures the commit id in its sole group.
++ D COMMIT_HEAD "commit ([a-f0-9]+)[ \t]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A full log entry.  Captures the entry. Assume logs messages don't contain
++ # "==="
++ D COMMIT_LOG "(===[ ]*\ncommit [a-f0-9]+[ ]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d[ ]*\n(?:.|\n)*?(?=\Z|\n===))"
++ # An arbitrary line of text (works even with ?s)
++ D ARBLINE "[^\n]*(?=\n|\Z)"
++ # Zero or more arbitrary full lines of text.
++ D ARBLINES "(?:(?:.|\n)*(?:\n|\Z)|\A|\Z)"
++ > init
++ + f.txt wug.txt
++ > status
+- === Branches ===
+- *master
+- 
+- === Staged Files ===
+- 
+- === Removed Files ===
+- 
+- === Modifications Not Staged For Commit ===
+- 
+- === Untracked Files ===
+- f.txt
+- 
++ > add f.txt
++ > commit "Add f"
++ + f.txt notwug.txt
++ > status
+- === Branches ===
+- *master
+- 
+- === Staged Files ===
+- 
+- === Removed Files ===
+- 
+- === Modifications Not Staged For Commit ===
+- f.txt
+- 
+- === Untracked Files ===
+- 
+ERROR (incorrect output)
+test09-add-remove-status:
+Testing directory: test09-add-remove-status_0
++ I init-add-2-files.inc
++ I definitions.inc
++ # Standard definitions
++ D DATE "Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A status log header RE.  Captures the commit id in its sole group.
++ D COMMIT_HEAD "commit ([a-f0-9]+)[ \t]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A full log entry.  Captures the entry. Assume logs messages don't contain
++ # "==="
++ D COMMIT_LOG "(===[ ]*\ncommit [a-f0-9]+[ ]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d[ ]*\n(?:.|\n)*?(?=\Z|\n===))"
++ # An arbitrary line of text (works even with ?s)
++ D ARBLINE "[^\n]*(?=\n|\Z)"
++ # Zero or more arbitrary full lines of text.
++ D ARBLINES "(?:(?:.|\n)*(?:\n|\Z)|\A|\Z)"
++ > init
++ + f.txt wug.txt
++ + g.txt notwug.txt
++ > add g.txt
++ > add f.txt
++ > rm f.txt
++ > status
+- === Branches ===
+- *master
+- 
+- === Staged Files ===
+- g.txt
+- 
+- === Removed Files ===
+- 
+- === Modifications Not Staged For Commit ===
+- 
+- === Untracked Files ===
+- f.txt
+- 
++ # bruhhhhhhhhhhhh
++ = f.txt wug.txt
+OK
+test10-remove-add-status:
+Testing directory: test10-remove-add-status_0
++ I commit-2-files.inc
++ # Commit two files.
++ I init-add-2-files.inc
++ I definitions.inc
++ # Standard definitions
++ D DATE "Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A status log header RE.  Captures the commit id in its sole group.
++ D COMMIT_HEAD "commit ([a-f0-9]+)[ \t]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A full log entry.  Captures the entry. Assume logs messages don't contain
++ # "==="
++ D COMMIT_LOG "(===[ ]*\ncommit [a-f0-9]+[ ]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d[ ]*\n(?:.|\n)*?(?=\Z|\n===))"
++ # An arbitrary line of text (works even with ?s)
++ D ARBLINE "[^\n]*(?=\n|\Z)"
++ # Zero or more arbitrary full lines of text.
++ D ARBLINES "(?:(?:.|\n)*(?:\n|\Z)|\A|\Z)"
++ > init
++ + f.txt wug.txt
++ + g.txt notwug.txt
++ > add g.txt
++ > add f.txt
++ > commit "Two files"
++ 
++ > rm f.txt
++ * f.txt
++ + f.txt wug.txt
++ > add f.txt
++ > status
+- === Branches ===
+- *master
+- 
+- === Staged Files ===
+- 
+- === Removed Files ===
+- 
+- === Modifications Not Staged For Commit ===
+- 
+- === Untracked Files ===
+- 
+OK
+test11-remove-commit-status:
+Testing directory: test11-remove-commit-status_0
++ I commit-2-files.inc
++ # Commit two files.
++ I init-add-2-files.inc
++ I definitions.inc
++ # Standard definitions
++ D DATE "Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A status log header RE.  Captures the commit id in its sole group.
++ D COMMIT_HEAD "commit ([a-f0-9]+)[ \t]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A full log entry.  Captures the entry. Assume logs messages don't contain
++ # "==="
++ D COMMIT_LOG "(===[ ]*\ncommit [a-f0-9]+[ ]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d[ ]*\n(?:.|\n)*?(?=\Z|\n===))"
++ # An arbitrary line of text (works even with ?s)
++ D ARBLINE "[^\n]*(?=\n|\Z)"
++ # Zero or more arbitrary full lines of text.
++ D ARBLINES "(?:(?:.|\n)*(?:\n|\Z)|\A|\Z)"
++ > init
++ + f.txt wug.txt
++ + g.txt notwug.txt
++ > add g.txt
++ > add f.txt
++ > commit "Two files"
++ 
++ I blank-status.inc
++ > status
+- === Branches ===
+- *master
+- 
+- === Staged Files ===
+- 
+- === Removed Files ===
+- 
+- === Modifications Not Staged For Commit ===
+- 
+- === Untracked Files ===
+- 
++ > rm f.txt
++ > commit "Removed f.txt"
++ I blank-status.inc
++ > status
+- === Branches ===
+- *master
+- 
+- === Staged Files ===
+- 
+- === Removed Files ===
+- 
+- === Modifications Not Staged For Commit ===
+- 
+- === Untracked Files ===
+- 
+OK
+test12-successful-find:
+Testing directory: test12-successful-find_0
++ I commit-2-files.inc
++ # Commit two files.
++ I init-add-2-files.inc
++ I definitions.inc
++ # Standard definitions
++ D DATE "Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A status log header RE.  Captures the commit id in its sole group.
++ D COMMIT_HEAD "commit ([a-f0-9]+)[ \t]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A full log entry.  Captures the entry. Assume logs messages don't contain
++ # "==="
++ D COMMIT_LOG "(===[ ]*\ncommit [a-f0-9]+[ ]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d[ ]*\n(?:.|\n)*?(?=\Z|\n===))"
++ # An arbitrary line of text (works even with ?s)
++ D ARBLINE "[^\n]*(?=\n|\Z)"
++ # Zero or more arbitrary full lines of text.
++ D ARBLINES "(?:(?:.|\n)*(?:\n|\Z)|\A|\Z)"
++ > init
++ + f.txt wug.txt
++ + g.txt notwug.txt
++ > add g.txt
++ > add f.txt
++ > commit "Two files"
++ 
++ > rm f.txt
++ > commit "Remove one file"
++ + f.txt notwug.txt
++ > add f.txt
++ > commit "Two files"
++ > log
+- ===
+- commit 010cf4ac60a2995c36eccfce510f95d11dec1e37
+- Date: Thu Jul 18 17:31:32 2024 +0300
+- Two files
+- 
+- ===
+- commit 5b1579ece2ec3a7d0ba0f625249940cadafa6c8d
+- Date: Thu Jul 18 17:31:32 2024 +0300
+- Remove one file
+- 
+- ===
+- commit 08fc60d1e527e7a1bcf5e83ba88081cfafd5ef5f
+- Date: Thu Jul 18 17:31:31 2024 +0300
+- Two files
+- 
+- ===
+- commit f7011bb0c9d9a16990818994b29775d3593e45e2
+- Date: Thu Jan 1 02:00:00 1970 +0200
+- initial commit
+- 
++ # UID of init commit
++ D UID1 "f7011bb0c9d9a16990818994b29775d3593e45e2"
++ # UID of second version
++ D UID2 "08fc60d1e527e7a1bcf5e83ba88081cfafd5ef5f"
++ # UID of third version
++ D UID3 "5b1579ece2ec3a7d0ba0f625249940cadafa6c8d"
++ # UID of current version
++ D UID4 "010cf4ac60a2995c36eccfce510f95d11dec1e37"
++ > find "Two files"
+- 010cf4ac60a2995c36eccfce510f95d11dec1e37
+- 08fc60d1e527e7a1bcf5e83ba88081cfafd5ef5f
++ > find "initial commit"
+- f7011bb0c9d9a16990818994b29775d3593e45e2
++ > find "Remove one file"
+- 5b1579ece2ec3a7d0ba0f625249940cadafa6c8d
+OK
+test13-find-err-msg:
+Testing directory: test13-find-err-msg_0
++ I commit-2-files.inc
++ # Commit two files.
++ I init-add-2-files.inc
++ I definitions.inc
++ # Standard definitions
++ D DATE "Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A status log header RE.  Captures the commit id in its sole group.
++ D COMMIT_HEAD "commit ([a-f0-9]+)[ \t]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A full log entry.  Captures the entry. Assume logs messages don't contain
++ # "==="
++ D COMMIT_LOG "(===[ ]*\ncommit [a-f0-9]+[ ]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d[ ]*\n(?:.|\n)*?(?=\Z|\n===))"
++ # An arbitrary line of text (works even with ?s)
++ D ARBLINE "[^\n]*(?=\n|\Z)"
++ # Zero or more arbitrary full lines of text.
++ D ARBLINES "(?:(?:.|\n)*(?:\n|\Z)|\A|\Z)"
++ > init
++ + f.txt wug.txt
++ + g.txt notwug.txt
++ > add g.txt
++ > add f.txt
++ > commit "Two files"
++ 
++ > rm f.txt
++ > commit "Remove one file"
++ > find "Add another file"
+- Found no commit with that message.
+OK
+test14-reset-global-log:
+Testing directory: test14-reset-global-log_0
++ I commit-2-files.inc
++ # Commit two files.
++ I init-add-2-files.inc
++ I definitions.inc
++ # Standard definitions
++ D DATE "Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A status log header RE.  Captures the commit id in its sole group.
++ D COMMIT_HEAD "commit ([a-f0-9]+)[ \t]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A full log entry.  Captures the entry. Assume logs messages don't contain
++ # "==="
++ D COMMIT_LOG "(===[ ]*\ncommit [a-f0-9]+[ ]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d[ ]*\n(?:.|\n)*?(?=\Z|\n===))"
++ # An arbitrary line of text (works even with ?s)
++ D ARBLINE "[^\n]*(?=\n|\Z)"
++ # Zero or more arbitrary full lines of text.
++ D ARBLINES "(?:(?:.|\n)*(?:\n|\Z)|\A|\Z)"
++ > init
++ + f.txt wug.txt
++ + g.txt notwug.txt
++ > add g.txt
++ > add f.txt
++ > commit "Two files"
++ 
++ D DATE1 "Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d"
++ D COMMIT_LOG "(===[ ]*\ncommit [a-f0-9]+[ ]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d) [-+](\d\d\d\d[ ]*\n(?:.|\n)*?(?=\Z|\n===))"
++ + h.txt wug.txt
++ > add h.txt
++ > commit "Add h"
++ > log
+- ===
+- commit c164af4f300d2695d2c188f2f6b3c9b61642cb91
+- Date: Thu Jul 18 17:31:33 2024 +0300
+- Add h
+- 
+- ===
+- commit f8e1bf8e4089ca96c65aadce5226ee44b5f7d389
+- Date: Thu Jul 18 17:31:33 2024 +0300
+- Two files
+- 
+- ===
+- commit f7011bb0c9d9a16990818994b29775d3593e45e2
+- Date: Thu Jan 1 02:00:00 1970 +0200
+- initial commit
+- 
++ D L1 "===
+commit c164af4f300d2695d2c188f2f6b3c9b61642cb91
+Date: Thu Jul 18 17:31:33 2024 [-+]0300
+Add h
+"
++ D L2 "===
+commit f8e1bf8e4089ca96c65aadce5226ee44b5f7d389
+Date: Thu Jul 18 17:31:33 2024 [-+]0300
+Two files
+"
++ D L3 "===
+commit f7011bb0c9d9a16990818994b29775d3593e45e2
+Date: Thu Jan 1 02:00:00 1970 [-+]0200
+initial commit
+
+"
++ > log
+- ===
+- commit c164af4f300d2695d2c188f2f6b3c9b61642cb91
+- Date: Thu Jul 18 17:31:33 2024 +0300
+- Add h
+- 
+- ===
+- commit f8e1bf8e4089ca96c65aadce5226ee44b5f7d389
+- Date: Thu Jul 18 17:31:33 2024 +0300
+- Two files
+- 
+- ===
+- commit f7011bb0c9d9a16990818994b29775d3593e45e2
+- Date: Thu Jan 1 02:00:00 1970 +0200
+- initial commit
+- 
++ D ID "f8e1bf8e4089ca96c65aadce5226ee44b5f7d389"
++ > reset f8e1bf8e4089ca96c65aadce5226ee44b5f7d389
++ > global-log
+- ===
+- commit c164af4f300d2695d2c188f2f6b3c9b61642cb91
+- Date: Thu Jul 18 17:31:33 2024 +0300
+- Add h
+- 
+- ===
+- commit f7011bb0c9d9a16990818994b29775d3593e45e2
+- Date: Thu Jan 1 02:00:00 1970 +0200
+- initial commit
+- 
+- ===
+- commit f8e1bf8e4089ca96c65aadce5226ee44b5f7d389
+- Date: Thu Jul 18 17:31:33 2024 +0300
+- Two files
+- 
+OK
+test15-rm-branch:
+Testing directory: test15-rm-branch_0
++ I definitions.inc
++ # Standard definitions
++ D DATE "Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A status log header RE.  Captures the commit id in its sole group.
++ D COMMIT_HEAD "commit ([a-f0-9]+)[ \t]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A full log entry.  Captures the entry. Assume logs messages don't contain
++ # "==="
++ D COMMIT_LOG "(===[ ]*\ncommit [a-f0-9]+[ ]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d[ ]*\n(?:.|\n)*?(?=\Z|\n===))"
++ # An arbitrary line of text (works even with ?s)
++ D ARBLINE "[^\n]*(?=\n|\Z)"
++ # Zero or more arbitrary full lines of text.
++ D ARBLINES "(?:(?:.|\n)*(?:\n|\Z)|\A|\Z)"
++ > init
++ > branch other
++ + f.txt wug.txt
++ > add f.txt
++ > commit "File f.txt"
++ > checkout other
++ + g.txt notwug.txt
++ > add g.txt
++ > commit "File g.txt"
++ > checkout master
+- There is an untracked file in the way; delete it, or add and commit it first.
+ERROR (incorrect output)
+test16-checkout-overwrite-err:
+Testing directory: test16-checkout-overwrite-err_0
++ I definitions.inc
++ # Standard definitions
++ D DATE "Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A status log header RE.  Captures the commit id in its sole group.
++ D COMMIT_HEAD "commit ([a-f0-9]+)[ \t]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A full log entry.  Captures the entry. Assume logs messages don't contain
++ # "==="
++ D COMMIT_LOG "(===[ ]*\ncommit [a-f0-9]+[ ]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d[ ]*\n(?:.|\n)*?(?=\Z|\n===))"
++ # An arbitrary line of text (works even with ?s)
++ D ARBLINE "[^\n]*(?=\n|\Z)"
++ # Zero or more arbitrary full lines of text.
++ D ARBLINES "(?:(?:.|\n)*(?:\n|\Z)|\A|\Z)"
++ > init
++ > branch other
++ + f.txt wug.txt
++ + g.txt notwug.txt
++ > add g.txt
++ > add f.txt
++ > commit "Main two files"
++ E f.txt
++ E g.txt
++ > checkout other
++ + f.txt notwug.txt
++ > checkout master
+- There is an untracked file in the way; delete it, or add and commit it first.
+OK
+test17-reset-err:
+Testing directory: test17-reset-err_0
++ I commit-2-files.inc
++ # Commit two files.
++ I init-add-2-files.inc
++ I definitions.inc
++ # Standard definitions
++ D DATE "Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A status log header RE.  Captures the commit id in its sole group.
++ D COMMIT_HEAD "commit ([a-f0-9]+)[ \t]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A full log entry.  Captures the entry. Assume logs messages don't contain
++ # "==="
++ D COMMIT_LOG "(===[ ]*\ncommit [a-f0-9]+[ ]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d[ ]*\n(?:.|\n)*?(?=\Z|\n===))"
++ # An arbitrary line of text (works even with ?s)
++ D ARBLINE "[^\n]*(?=\n|\Z)"
++ # Zero or more arbitrary full lines of text.
++ D ARBLINES "(?:(?:.|\n)*(?:\n|\Z)|\A|\Z)"
++ > init
++ + f.txt wug.txt
++ + g.txt notwug.txt
++ > add g.txt
++ > add f.txt
++ > commit "Two files"
++ 
++ > branch other
++ + h.txt wug2.txt
++ > add h.txt
++ > rm g.txt
++ > commit "Add h.txt and remove g.txt"
++ > log
+- ===
+- commit 7b5f3cc065c36b9958404262b3072f914264c636
+- Date: Thu Jul 18 17:31:35 2024 +0300
+- Add h.txt and remove g.txt
+- 
+- ===
+- commit 7c6cd3571e8e427b9ab6335ae15b21b2be0fe017
+- Date: Thu Jul 18 17:31:35 2024 +0300
+- Two files
+- 
+- ===
+- commit f7011bb0c9d9a16990818994b29775d3593e45e2
+- Date: Thu Jan 1 02:00:00 1970 +0200
+- initial commit
+- 
++ D INIT "f7011bb0c9d9a16990818994b29775d3593e45e2"
++ D TWO "7c6cd3571e8e427b9ab6335ae15b21b2be0fe017"
++ D MASTER1 "7b5f3cc065c36b9958404262b3072f914264c636"
++ 
++ > checkout other
++ # Almost certain not to exist.
++ > reset 025052f2b193d417df998517a4c539918801b430
+- No commit with that id exists.
++ + h.txt wug3.txt
++ > reset 7b5f3cc065c36b9958404262b3072f914264c636
+- There is an untracked file in the way; delete it, or add and commit it first.
+OK
+test18-reset:
+Testing directory: test18-reset_0
++ I commit-2-files.inc
++ # Commit two files.
++ I init-add-2-files.inc
++ I definitions.inc
++ # Standard definitions
++ D DATE "Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A status log header RE.  Captures the commit id in its sole group.
++ D COMMIT_HEAD "commit ([a-f0-9]+)[ \t]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A full log entry.  Captures the entry. Assume logs messages don't contain
++ # "==="
++ D COMMIT_LOG "(===[ ]*\ncommit [a-f0-9]+[ ]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d[ ]*\n(?:.|\n)*?(?=\Z|\n===))"
++ # An arbitrary line of text (works even with ?s)
++ D ARBLINE "[^\n]*(?=\n|\Z)"
++ # Zero or more arbitrary full lines of text.
++ D ARBLINES "(?:(?:.|\n)*(?:\n|\Z)|\A|\Z)"
++ > init
++ + f.txt wug.txt
++ + g.txt notwug.txt
++ > add g.txt
++ > add f.txt
++ > commit "Two files"
++ 
++ > branch other
++ + h.txt wug2.txt
++ > add h.txt
++ > rm g.txt
++ > commit "Add h.txt and remove g.txt"
++ > checkout other
++ > rm f.txt
++ + k.txt wug3.txt
++ > add k.txt
++ > commit "Add k.txt and remove f.txt"
++ > log
+- ===
+- commit 07079a07954c38fa56633d31919de9e62af5f599
+- Date: Thu Jul 18 17:31:37 2024 +0300
+- Add k.txt and remove f.txt
+- 
+- ===
+- commit 35806b6227e255d28b57bea0daaf33e65ac5780e
+- Date: Thu Jul 18 17:31:36 2024 +0300
+- Two files
+- 
+- ===
+- commit f7011bb0c9d9a16990818994b29775d3593e45e2
+- Date: Thu Jan 1 02:00:00 1970 +0200
+- initial commit
+- 
++ D INIT "f7011bb0c9d9a16990818994b29775d3593e45e2"
++ D TWO "35806b6227e255d28b57bea0daaf33e65ac5780e"
++ D OTHER1 "07079a07954c38fa56633d31919de9e62af5f599"
++ 
++ > checkout master
+- There is an untracked file in the way; delete it, or add and commit it first.
+ERROR (incorrect output)
+test19-rm-branch-err:
+Testing directory: test19-rm-branch-err_0
++ I definitions.inc
++ # Standard definitions
++ D DATE "Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A status log header RE.  Captures the commit id in its sole group.
++ D COMMIT_HEAD "commit ([a-f0-9]+)[ \t]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A full log entry.  Captures the entry. Assume logs messages don't contain
++ # "==="
++ D COMMIT_LOG "(===[ ]*\ncommit [a-f0-9]+[ ]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d[ ]*\n(?:.|\n)*?(?=\Z|\n===))"
++ # An arbitrary line of text (works even with ?s)
++ D ARBLINE "[^\n]*(?=\n|\Z)"
++ # Zero or more arbitrary full lines of text.
++ D ARBLINES "(?:(?:.|\n)*(?:\n|\Z)|\A|\Z)"
++ > init
++ > branch other
++ > checkout other
++ + f.txt wug.txt
++ > add f.txt
++ > commit "File f.txt"
++ > rm-branch other
+- No command with that name exists.
+ERROR (incorrect output)
+test20-merge-no-conflicts:
+Testing directory: test20-merge-no-conflicts_0
++ I commit-2-files.inc
++ # Commit two files.
++ I init-add-2-files.inc
++ I definitions.inc
++ # Standard definitions
++ D DATE "Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A status log header RE.  Captures the commit id in its sole group.
++ D COMMIT_HEAD "commit ([a-f0-9]+)[ \t]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A full log entry.  Captures the entry. Assume logs messages don't contain
++ # "==="
++ D COMMIT_LOG "(===[ ]*\ncommit [a-f0-9]+[ ]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d[ ]*\n(?:.|\n)*?(?=\Z|\n===))"
++ # An arbitrary line of text (works even with ?s)
++ D ARBLINE "[^\n]*(?=\n|\Z)"
++ # Zero or more arbitrary full lines of text.
++ D ARBLINES "(?:(?:.|\n)*(?:\n|\Z)|\A|\Z)"
++ > init
++ + f.txt wug.txt
++ + g.txt notwug.txt
++ > add g.txt
++ > add f.txt
++ > commit "Two files"
++ 
++ > branch other
++ + h.txt wug2.txt
++ > add h.txt
++ > rm g.txt
++ > commit "Add h.txt and remove g.txt"
++ > checkout other
++ > rm f.txt
++ + k.txt wug3.txt
++ > add k.txt
++ > commit "Add k.txt and remove f.txt"
++ > checkout master
+- There is an untracked file in the way; delete it, or add and commit it first.
+ERROR (incorrect output)
+test21-merge-conflict:
+Testing directory: test21-merge-conflict_0
++ I commit-2-files.inc
++ # Commit two files.
++ I init-add-2-files.inc
++ I definitions.inc
++ # Standard definitions
++ D DATE "Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A status log header RE.  Captures the commit id in its sole group.
++ D COMMIT_HEAD "commit ([a-f0-9]+)[ \t]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A full log entry.  Captures the entry. Assume logs messages don't contain
++ # "==="
++ D COMMIT_LOG "(===[ ]*\ncommit [a-f0-9]+[ ]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d[ ]*\n(?:.|\n)*?(?=\Z|\n===))"
++ # An arbitrary line of text (works even with ?s)
++ D ARBLINE "[^\n]*(?=\n|\Z)"
++ # Zero or more arbitrary full lines of text.
++ D ARBLINES "(?:(?:.|\n)*(?:\n|\Z)|\A|\Z)"
++ > init
++ + f.txt wug.txt
++ + g.txt notwug.txt
++ > add g.txt
++ > add f.txt
++ > commit "Two files"
++ 
++ > branch other
++ + h.txt wug2.txt
++ > add h.txt
++ > rm g.txt
++ + f.txt wug2.txt
++ > add f.txt
++ > commit "Add h.txt, remove g.txt, and change f.txt"
++ > checkout other
++ + f.txt notwug.txt
++ > add f.txt
++ + k.txt wug3.txt
++ > add k.txt
++ > commit "Add k.txt and modify f.txt"
++ > checkout master
+- There is an untracked file in the way; delete it, or add and commit it first.
+ERROR (incorrect output)
+test22-merge-rm-conflict:
+Testing directory: test22-merge-rm-conflict_0
++ I commit-2-files.inc
++ # Commit two files.
++ I init-add-2-files.inc
++ I definitions.inc
++ # Standard definitions
++ D DATE "Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A status log header RE.  Captures the commit id in its sole group.
++ D COMMIT_HEAD "commit ([a-f0-9]+)[ \t]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A full log entry.  Captures the entry. Assume logs messages don't contain
++ # "==="
++ D COMMIT_LOG "(===[ ]*\ncommit [a-f0-9]+[ ]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d[ ]*\n(?:.|\n)*?(?=\Z|\n===))"
++ # An arbitrary line of text (works even with ?s)
++ D ARBLINE "[^\n]*(?=\n|\Z)"
++ # Zero or more arbitrary full lines of text.
++ D ARBLINES "(?:(?:.|\n)*(?:\n|\Z)|\A|\Z)"
++ > init
++ + f.txt wug.txt
++ + g.txt notwug.txt
++ > add g.txt
++ > add f.txt
++ > commit "Two files"
++ 
++ > branch other
++ + h.txt wug2.txt
++ > add h.txt
++ > rm g.txt
++ + f.txt wug2.txt
++ > add f.txt
++ > commit "Add h.txt, remove g.txt, and change f.txt"
++ > checkout other
++ > rm f.txt
++ + k.txt wug3.txt
++ > add k.txt
++ > commit "Add k.txt and remove f.txt"
++ > checkout master
+- There is an untracked file in the way; delete it, or add and commit it first.
+ERROR (incorrect output)
+test23-merge-parent:
+Testing directory: test23-merge-parent_0
++ I definitions.inc
++ # Standard definitions
++ D DATE "Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A status log header RE.  Captures the commit id in its sole group.
++ D COMMIT_HEAD "commit ([a-f0-9]+)[ \t]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A full log entry.  Captures the entry. Assume logs messages don't contain
++ # "==="
++ D COMMIT_LOG "(===[ ]*\ncommit [a-f0-9]+[ ]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d[ ]*\n(?:.|\n)*?(?=\Z|\n===))"
++ # An arbitrary line of text (works even with ?s)
++ D ARBLINE "[^\n]*(?=\n|\Z)"
++ # Zero or more arbitrary full lines of text.
++ D ARBLINES "(?:(?:.|\n)*(?:\n|\Z)|\A|\Z)"
++ > init
++ > branch B1
++ > branch B2
++ > checkout B1
++ + h.txt wug.txt
++ > add h.txt
++ > commit "Add h.txt"
++ > checkout B2
++ + f.txt wug.txt
++ > add f.txt
++ > commit "f.txt added"
++ > branch C1
++ + g.txt notwug.txt
++ > add g.txt
++ > rm f.txt
++ > commit "g.txt added, f.txt removed"
++ = g.txt notwug.txt
++ * f.txt
++ * h.txt
+ERROR (file h.txt present)
+test24-godly-split:
+Testing directory: test24-godly-split_0
++ I commit-2-files.inc
++ # Commit two files.
++ I init-add-2-files.inc
++ I definitions.inc
++ # Standard definitions
++ D DATE "Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A status log header RE.  Captures the commit id in its sole group.
++ D COMMIT_HEAD "commit ([a-f0-9]+)[ \t]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A full log entry.  Captures the entry. Assume logs messages don't contain
++ # "==="
++ D COMMIT_LOG "(===[ ]*\ncommit [a-f0-9]+[ ]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d[ ]*\n(?:.|\n)*?(?=\Z|\n===))"
++ # An arbitrary line of text (works even with ?s)
++ D ARBLINE "[^\n]*(?=\n|\Z)"
++ # Zero or more arbitrary full lines of text.
++ D ARBLINES "(?:(?:.|\n)*(?:\n|\Z)|\A|\Z)"
++ > init
++ + f.txt wug.txt
++ + g.txt notwug.txt
++ > add g.txt
++ > add f.txt
++ > commit "Two files"
++ 
++ > branch other
++ + h.txt wug2.txt
++ > add h.txt
++ > commit "Added h.txt"
++ > checkout other
++ > rm f.txt
++ > commit "Removed f.txt"
++ * f.txt
++ E g.txt
++ > branch godlyOther
++ + k.txt wug3.txt
++ > add k.txt
++ > commit "Added k.txt"
++ > checkout master
+- There is an untracked file in the way; delete it, or add and commit it first.
+ERROR (incorrect output)
+test25-devily-split:
+Testing directory: test25-devily-split_0
++ I commit-2-files.inc
++ # Commit two files.
++ I init-add-2-files.inc
++ I definitions.inc
++ # Standard definitions
++ D DATE "Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A status log header RE.  Captures the commit id in its sole group.
++ D COMMIT_HEAD "commit ([a-f0-9]+)[ \t]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A full log entry.  Captures the entry. Assume logs messages don't contain
++ # "==="
++ D COMMIT_LOG "(===[ ]*\ncommit [a-f0-9]+[ ]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d[ ]*\n(?:.|\n)*?(?=\Z|\n===))"
++ # An arbitrary line of text (works even with ?s)
++ D ARBLINE "[^\n]*(?=\n|\Z)"
++ # Zero or more arbitrary full lines of text.
++ D ARBLINES "(?:(?:.|\n)*(?:\n|\Z)|\A|\Z)"
++ > init
++ + f.txt wug.txt
++ + g.txt notwug.txt
++ > add g.txt
++ > add f.txt
++ > commit "Two files"
++ 
++ > branch other
++ + h.txt wug2.txt
++ > add h.txt
++ > rm g.txt
++ > commit "Added h.txt and removed g.txt"
++ > checkout other
++ > rm f.txt
++ > commit "Removed f.txt"
++ * f.txt
++ E g.txt
++ > checkout master
+- There is an untracked file in the way; delete it, or add and commit it first.
+ERROR (incorrect output)
+test26-gg:
+Testing directory: test26-gg_0
++ I commit-2-files.inc
++ # Commit two files.
++ I init-add-2-files.inc
++ I definitions.inc
++ # Standard definitions
++ D DATE "Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A status log header RE.  Captures the commit id in its sole group.
++ D COMMIT_HEAD "commit ([a-f0-9]+)[ \t]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A full log entry.  Captures the entry. Assume logs messages don't contain
++ # "==="
++ D COMMIT_LOG "(===[ ]*\ncommit [a-f0-9]+[ ]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d[ ]*\n(?:.|\n)*?(?=\Z|\n===))"
++ # An arbitrary line of text (works even with ?s)
++ D ARBLINE "[^\n]*(?=\n|\Z)"
++ # Zero or more arbitrary full lines of text.
++ D ARBLINES "(?:(?:.|\n)*(?:\n|\Z)|\A|\Z)"
++ > init
++ + f.txt wug.txt
++ + g.txt notwug.txt
++ > add g.txt
++ > add f.txt
++ > commit "Two files"
++ 
++ > branch other
++ + h.txt wug2.txt
++ > add h.txt
++ > rm g.txt
++ > commit "Added h.txt and removed g.txt"
++ > checkout other
++ > rm f.txt
++ > commit "Removed f.txt"
++ * f.txt
++ E g.txt
++ > checkout master
+- There is an untracked file in the way; delete it, or add and commit it first.
+ERROR (incorrect output)
+test27-mmsp:
+Testing directory: test27-mmsp_0
++ I commit-2-files.inc
++ # Commit two files.
++ I init-add-2-files.inc
++ I definitions.inc
++ # Standard definitions
++ D DATE "Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A status log header RE.  Captures the commit id in its sole group.
++ D COMMIT_HEAD "commit ([a-f0-9]+)[ \t]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A full log entry.  Captures the entry. Assume logs messages don't contain
++ # "==="
++ D COMMIT_LOG "(===[ ]*\ncommit [a-f0-9]+[ ]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d[ ]*\n(?:.|\n)*?(?=\Z|\n===))"
++ # An arbitrary line of text (works even with ?s)
++ D ARBLINE "[^\n]*(?=\n|\Z)"
++ # Zero or more arbitrary full lines of text.
++ D ARBLINES "(?:(?:.|\n)*(?:\n|\Z)|\A|\Z)"
++ > init
++ + f.txt wug.txt
++ + g.txt notwug.txt
++ > add g.txt
++ > add f.txt
++ > commit "Two files"
++ 
++ > branch other
++ + h.txt wug2.txt
++ > add h.txt
++ > commit "Added h.txt"
++ > checkout other
++ > rm f.txt
++ > commit "Removed f.txt"
++ * f.txt
++ E g.txt
++ > branch godlyOther
++ + k.txt wug3.txt
++ > add k.txt
++ > commit "Added k.txt"
++ > merge master
+- No command with that name exists.
+ERROR (incorrect output)
+test28-final:
+Testing directory: test28-final_0
++ I commit-2-files.inc
++ # Commit two files.
++ I init-add-2-files.inc
++ I definitions.inc
++ # Standard definitions
++ D DATE "Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A status log header RE.  Captures the commit id in its sole group.
++ D COMMIT_HEAD "commit ([a-f0-9]+)[ \t]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A full log entry.  Captures the entry. Assume logs messages don't contain
++ # "==="
++ D COMMIT_LOG "(===[ ]*\ncommit [a-f0-9]+[ ]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d[ ]*\n(?:.|\n)*?(?=\Z|\n===))"
++ # An arbitrary line of text (works even with ?s)
++ D ARBLINE "[^\n]*(?=\n|\Z)"
++ # Zero or more arbitrary full lines of text.
++ D ARBLINES "(?:(?:.|\n)*(?:\n|\Z)|\A|\Z)"
++ > init
++ + f.txt wug.txt
++ + g.txt notwug.txt
++ > add g.txt
++ > add f.txt
++ > commit "Two files"
++ 
++ > branch other
++ > branch nextOther
++ > rm f.txt
++ > commit "Removed f.txt"
++ > merge other
+- No command with that name exists.
+ERROR (incorrect output)
+test29-dandaryilar:
+Testing directory: test29-dandaryilar_0
++ I commit-2-files.inc
++ # Commit two files.
++ I init-add-2-files.inc
++ I definitions.inc
++ # Standard definitions
++ D DATE "Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A status log header RE.  Captures the commit id in its sole group.
++ D COMMIT_HEAD "commit ([a-f0-9]+)[ \t]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A full log entry.  Captures the entry. Assume logs messages don't contain
++ # "==="
++ D COMMIT_LOG "(===[ ]*\ncommit [a-f0-9]+[ ]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d[ ]*\n(?:.|\n)*?(?=\Z|\n===))"
++ # An arbitrary line of text (works even with ?s)
++ D ARBLINE "[^\n]*(?=\n|\Z)"
++ # Zero or more arbitrary full lines of text.
++ D ARBLINES "(?:(?:.|\n)*(?:\n|\Z)|\A|\Z)"
++ > init
++ + f.txt wug.txt
++ + g.txt notwug.txt
++ > add g.txt
++ > add f.txt
++ > commit "Two files"
++ 
++ > branch other
++ > rm f.txt
++ > rm g.txt
++ + h.txt wug2.txt
++ > add h.txt
++ > commit "Removed both files and added h.txt"
++ > branch danDarYiLar
++ > rm h.txt
++ > commit "Removed h.txt too :V"
++ > checkout other
++ + f.txt notwug.txt
++ > add f.txt
++ > rm g.txt
++ > commit "Removed g.txt and fixed f.txt"
++ > checkout danDarYiLar
++ > merge other
+- No command with that name exists.
+ERROR (incorrect output)
+test30-final-bug:
+Testing directory: test30-final-bug_0
++ I commit-2-files.inc
++ # Commit two files.
++ I init-add-2-files.inc
++ I definitions.inc
++ # Standard definitions
++ D DATE "Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A status log header RE.  Captures the commit id in its sole group.
++ D COMMIT_HEAD "commit ([a-f0-9]+)[ \t]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A full log entry.  Captures the entry. Assume logs messages don't contain
++ # "==="
++ D COMMIT_LOG "(===[ ]*\ncommit [a-f0-9]+[ ]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d[ ]*\n(?:.|\n)*?(?=\Z|\n===))"
++ # An arbitrary line of text (works even with ?s)
++ D ARBLINE "[^\n]*(?=\n|\Z)"
++ # Zero or more arbitrary full lines of text.
++ D ARBLINES "(?:(?:.|\n)*(?:\n|\Z)|\A|\Z)"
++ > init
++ + f.txt wug.txt
++ + g.txt notwug.txt
++ > add g.txt
++ > add f.txt
++ > commit "Two files"
++ 
++ > branch other
++ > rm f.txt
++ > rm g.txt
++ + h.txt wug2.txt
++ > add h.txt
++ > commit "Removed both files and added h.txt"
++ > branch danDarYiLar
++ > rm h.txt
++ > commit "Removed h.txt too :V"
++ > checkout other
++ + f.txt notwug.txt
++ > add f.txt
++ > rm g.txt
++ > commit "Removed g.txt and fixed f.txt"
++ > branch legendary
++ > rm f.txt
++ > commit "Removed fixed f.txt"
++ > checkout danDarYiLar
++ > merge legendary
+- No command with that name exists.
+ERROR (incorrect output)
+
+Ran 30 tests. 14 passed.
+make[1]: Leaving directory '/home/agx/Desktop/CS61B/CS61B/proj2/testing'
+"make" -C gitlet default
+make[1]: Entering directory '/home/agx/Desktop/CS61B/CS61B/proj2/gitlet'
+make[1]: Nothing to be done for 'default'.
+make[1]: Leaving directory '/home/agx/Desktop/CS61B/CS61B/proj2/gitlet'
+"make" -C testing PYTHON=python3 TESTER_FLAGS="--verbose" check
+make[1]: Entering directory '/home/agx/Desktop/CS61B/CS61B/proj2/testing'
+Testing application gitlet.Main...
+CLASSPATH="$(pwd)/..::;$(pwd)/..;" python3 tester.py --verbose samples/*.in student_tests/*.in *.in
+test01-init:
+Testing directory: test01-init_0
++ # Basic initialization
++ > init
++ E .gitlet
+OK
+test02-basic-checkout:
+Testing directory: test02-basic-checkout_0
++ # A simple test of adding, committing, modifying, and checking out.
++ > init
++ + wug.txt wug.txt
++ > add wug.txt
++ > commit "added wug"
++ + wug.txt notwug.txt
++ # Must change
++ > checkout -- wug.txt
++ = wug.txt wug.txt
+OK
+test03-basic-log:
+Testing directory: test03-basic-log_0
++ # Set up a simple chain of commits and check their log.
++ I definitions.inc
++ # Standard definitions
++ D DATE "Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A status log header RE.  Captures the commit id in its sole group.
++ D COMMIT_HEAD "commit ([a-f0-9]+)[ \t]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]  *\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A full log entry.  Captures the entry. Assume logs messages don't contain
++ # "==="
++ D COMMIT_LOG "(===[ ]*\ncommit [a-f0-9]+[ ]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d[ ]*\n(?:.|\n)*?(?=\Z|\n===))"
++ # An arbitrary line of text (works even with ?s)
++ D ARBLINE "[^\n]*(?=\n|\Z)"
++ # Zero or more arbitrary full lines of text.
++ D ARBLINES "(?:(?:.|\n)*(?:\n|\Z)|\A|\Z)"
++ > init
++ + wug.txt wug.txt
++ > add wug.txt
++ > commit "added wug"
++ > log
+- ===
+- commit 324d229605a8467d03d2d037b13438cd2695f456
+- Date: Sun Jul 21 02:09:24 2024 +0300
+- added wug
+- 
+- ===
+- commit f7011bb0c9d9a16990818994b29775d3593e45e2
+- Date: Thu Jan 1 02:00:00 1970 +0200
+- initial commit
+- 
+OK
+test04-prev-checkout:
+Testing directory: test04-prev-checkout_0
++ # Check that we can check out a previous version.
++ I definitions.inc
++ # Standard definitions
++ D DATE "Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A status log header RE.  Captures the commit id in its sole group.
++ D COMMIT_HEAD "commit ([a-f0-9]+)[ \t]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]  *\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A full log entry.  Captures the entry. Assume logs messages don't contain
++ # "==="
++ D COMMIT_LOG "(===[ ]*\ncommit [a-f0-9]+[ ]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d[ ]*\n(?:.|\n)*?(?=\Z|\n===))"
++ # An arbitrary line of text (works even with ?s)
++ D ARBLINE "[^\n]*(?=\n|\Z)"
++ # Zero or more arbitrary full lines of text.
++ D ARBLINES "(?:(?:.|\n)*(?:\n|\Z)|\A|\Z)"
++ > init
++ + wug.txt wug.txt
++ > add wug.txt
++ > commit "version 1 of wug.txt"
++ + wug.txt notwug.txt
++ > add wug.txt
++ > commit "version 2 of wug.txt"
++ = wug.txt notwug.txt
++ # Each ${COMMIT_HEAD} captures its commit UID.
++ > log
+- ===
+- commit a77fba25588dfee92111f061356e6da007b62f5d
+- Date: Sun Jul 21 02:09:24 2024 +0300
+- version 2 of wug.txt
+- 
+- ===
+- commit 3eefc918345d8cf89d47fa222e615ff622fa0cde
+- Date: Sun Jul 21 02:09:24 2024 +0300
+- version 1 of wug.txt
+- 
+- ===
+- commit f7011bb0c9d9a16990818994b29775d3593e45e2
+- Date: Thu Jan 1 02:00:00 1970 +0200
+- initial commit
+- 
++ # UID of second version
++ D UID2 "a77fba25588dfee92111f061356e6da007b62f5d"
++ # UID of current version
++ D UID1 "3eefc918345d8cf89d47fa222e615ff622fa0cde"
++ > checkout 3eefc918345d8cf89d47fa222e615ff622fa0cde -- wug.txt
++ = wug.txt wug.txt
++ > checkout a77fba25588dfee92111f061356e6da007b62f5d -- wug.txt
++ = wug.txt notwug.txt
+OK
+test05-bad-checkouts-err:
+Testing directory: test05-bad-checkouts-err_0
++ # Check that we can check out a previous version.
++ I definitions.inc
++ # Standard definitions
++ D DATE "Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A status log header RE.  Captures the commit id in its sole group.
++ D COMMIT_HEAD "commit ([a-f0-9]+)[ \t]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A full log entry.  Captures the entry. Assume logs messages don't contain
++ # "==="
++ D COMMIT_LOG "(===[ ]*\ncommit [a-f0-9]+[ ]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d[ ]*\n(?:.|\n)*?(?=\Z|\n===))"
++ # An arbitrary line of text (works even with ?s)
++ D ARBLINE "[^\n]*(?=\n|\Z)"
++ # Zero or more arbitrary full lines of text.
++ D ARBLINES "(?:(?:.|\n)*(?:\n|\Z)|\A|\Z)"
++ > init
++ + wug.txt wug.txt
++ > add wug.txt
++ > commit "version 1 of wug.txt"
++ + wug.txt notwug.txt
++ > add wug.txt
++ > commit "version 2 of wug.txt"
++ > log
+- ===
+- commit d3dfa973d9f85cd66a6d0e2dfaf273ad43d9b5b3
+- Date: Sun Jul 21 02:09:25 2024 +0300
+- version 2 of wug.txt
+- 
+- ===
+- commit eb8e7407064b061a3cd1ffc03f0b7df6c8a49868
+- Date: Sun Jul 21 02:09:25 2024 +0300
+- version 1 of wug.txt
+- 
+- ===
+- commit f7011bb0c9d9a16990818994b29775d3593e45e2
+- Date: Thu Jan 1 02:00:00 1970 +0200
+- initial commit
+- 
++ # UID of second version
++ D UID2 "d3dfa973d9f85cd66a6d0e2dfaf273ad43d9b5b3"
++ # UID of first version
++ D UID1 "eb8e7407064b061a3cd1ffc03f0b7df6c8a49868"
++ > checkout d3dfa973d9f85cd66a6d0e2dfaf273ad43d9b5b3 -- warg.txt
+- File does not exist in that commit.
++ > checkout 5d0bc169a1737e955f9cb26b9e7aa21e4afd4d12 -- wug.txt
+- No commit with that id exists.
++ > checkout foobar
+- No such branch exists.
++ > checkout master
+- No need to checkout the current branch.
+OK
+test06-global-log:
+Testing directory: test06-global-log_0
++ #Check global log
++ 
++ I commit-2-files.inc
++ # Commit two files.
++ I init-add-2-files.inc
++ I definitions.inc
++ # Standard definitions
++ D DATE "Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A status log header RE.  Captures the commit id in its sole group.
++ D COMMIT_HEAD "commit ([a-f0-9]+)[ \t]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A full log entry.  Captures the entry. Assume logs messages don't contain
++ # "==="
++ D COMMIT_LOG "(===[ ]*\ncommit [a-f0-9]+[ ]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d[ ]*\n(?:.|\n)*?(?=\Z|\n===))"
++ # An arbitrary line of text (works even with ?s)
++ D ARBLINE "[^\n]*(?=\n|\Z)"
++ # Zero or more arbitrary full lines of text.
++ D ARBLINES "(?:(?:.|\n)*(?:\n|\Z)|\A|\Z)"
++ > init
++ + f.txt wug.txt
++ + g.txt notwug.txt
++ > add g.txt
++ > add f.txt
++ > commit "Two files"
++ 
++ D DATE1 "Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d"
++ D COMMIT_LOG "(===[ ]*\ncommit [a-f0-9]+[ ]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d) [-+](\d\d\d\d[ ]*\n(?:.|\n)*?(?=\Z|\n===))"
++ + h.txt wug.txt
++ > add h.txt
++ > commit "Add h"
++ > log
+- ===
+- commit e743b1e904cbe0d5e21a66c0acade861a15a86a8
+- Date: Sun Jul 21 02:09:26 2024 +0300
+- Add h
+- 
+- ===
+- commit d664e0b7f6d333f189c2d45a12aa5cb53a652448
+- Date: Sun Jul 21 02:09:25 2024 +0300
+- Two files
+- 
+- ===
+- commit f7011bb0c9d9a16990818994b29775d3593e45e2
+- Date: Thu Jan 1 02:00:00 1970 +0200
+- initial commit
+- 
++ D L1 "===
+commit e743b1e904cbe0d5e21a66c0acade861a15a86a8
+Date: Sun Jul 21 02:09:26 2024 [-+]0300
+Add h
+"
++ D L2 "===
+commit d664e0b7f6d333f189c2d45a12aa5cb53a652448
+Date: Sun Jul 21 02:09:25 2024 [-+]0300
+Two files
+"
++ D L3 "===
+commit f7011bb0c9d9a16990818994b29775d3593e45e2
+Date: Thu Jan 1 02:00:00 1970 [-+]0200
+initial commit
+
+"
++ > global-log
+- ===
+- commit d664e0b7f6d333f189c2d45a12aa5cb53a652448
+- Date: Sun Jul 21 02:09:25 2024 +0300
+- Two files
+- 
+- ===
+- commit e743b1e904cbe0d5e21a66c0acade861a15a86a8
+- Date: Sun Jul 21 02:09:26 2024 +0300
+- Add h
+- 
+- ===
+- commit f7011bb0c9d9a16990818994b29775d3593e45e2
+- Date: Thu Jan 1 02:00:00 1970 +0200
+- initial commit
+- 
++ > global-log
+- ===
+- commit d664e0b7f6d333f189c2d45a12aa5cb53a652448
+- Date: Sun Jul 21 02:09:25 2024 +0300
+- Two files
+- 
+- ===
+- commit e743b1e904cbe0d5e21a66c0acade861a15a86a8
+- Date: Sun Jul 21 02:09:26 2024 +0300
+- Add h
+- 
+- ===
+- commit f7011bb0c9d9a16990818994b29775d3593e45e2
+- Date: Thu Jan 1 02:00:00 1970 +0200
+- initial commit
+- 
++ > global-log
+- ===
+- commit d664e0b7f6d333f189c2d45a12aa5cb53a652448
+- Date: Sun Jul 21 02:09:25 2024 +0300
+- Two files
+- 
+- ===
+- commit e743b1e904cbe0d5e21a66c0acade861a15a86a8
+- Date: Sun Jul 21 02:09:26 2024 +0300
+- Add h
+- 
+- ===
+- commit f7011bb0c9d9a16990818994b29775d3593e45e2
+- Date: Thu Jan 1 02:00:00 1970 +0200
+- initial commit
+- 
+OK
+test07-status-2-add:
+Testing directory: test07-status-2-add_0
++ # Status with two adds
++ I init-add-2-files.inc
++ I definitions.inc
++ # Standard definitions
++ D DATE "Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A status log header RE.  Captures the commit id in its sole group.
++ D COMMIT_HEAD "commit ([a-f0-9]+)[ \t]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A full log entry.  Captures the entry. Assume logs messages don't contain
++ # "==="
++ D COMMIT_LOG "(===[ ]*\ncommit [a-f0-9]+[ ]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d[ ]*\n(?:.|\n)*?(?=\Z|\n===))"
++ # An arbitrary line of text (works even with ?s)
++ D ARBLINE "[^\n]*(?=\n|\Z)"
++ # Zero or more arbitrary full lines of text.
++ D ARBLINES "(?:(?:.|\n)*(?:\n|\Z)|\A|\Z)"
++ > init
++ + f.txt wug.txt
++ + g.txt notwug.txt
++ > add g.txt
++ > add f.txt
++ > status
+- === Branches ===
+- *master
+- 
+- === Staged Files ===
+- f.txt
+- g.txt
+- 
+- === Removed Files ===
+- 
+- === Modifications Not Staged For Commit ===
+- 
+- === Untracked Files ===
+- 
++ 
+OK
+test08-untracked:
+Testing directory: test08-untracked_0
++ I definitions.inc
++ # Standard definitions
++ D DATE "Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A status log header RE.  Captures the commit id in its sole group.
++ D COMMIT_HEAD "commit ([a-f0-9]+)[ \t]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A full log entry.  Captures the entry. Assume logs messages don't contain
++ # "==="
++ D COMMIT_LOG "(===[ ]*\ncommit [a-f0-9]+[ ]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d[ ]*\n(?:.|\n)*?(?=\Z|\n===))"
++ # An arbitrary line of text (works even with ?s)
++ D ARBLINE "[^\n]*(?=\n|\Z)"
++ # Zero or more arbitrary full lines of text.
++ D ARBLINES "(?:(?:.|\n)*(?:\n|\Z)|\A|\Z)"
++ > init
++ + f.txt wug.txt
++ > status
+- === Branches ===
+- *master
+- 
+- === Staged Files ===
+- 
+- === Removed Files ===
+- 
+- === Modifications Not Staged For Commit ===
+- 
+- === Untracked Files ===
+- f.txt
+- 
++ > add f.txt
++ > commit "Add f"
++ + f.txt notwug.txt
++ > status
+- === Branches ===
+- *master
+- 
+- === Staged Files ===
+- 
+- === Removed Files ===
+- 
+- === Modifications Not Staged For Commit ===
+- f.txt (modified)
+- 
+- === Untracked Files ===
+- 
++ - f.txt
++ > status
+- === Branches ===
+- *master
+- 
+- === Staged Files ===
+- 
+- === Removed Files ===
+- 
+- === Modifications Not Staged For Commit ===
+- f.txt (deleted)
+- 
+- === Untracked Files ===
+- 
+OK
+test09-add-remove-status:
+Testing directory: test09-add-remove-status_0
++ I init-add-2-files.inc
++ I definitions.inc
++ # Standard definitions
++ D DATE "Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A status log header RE.  Captures the commit id in its sole group.
++ D COMMIT_HEAD "commit ([a-f0-9]+)[ \t]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A full log entry.  Captures the entry. Assume logs messages don't contain
++ # "==="
++ D COMMIT_LOG "(===[ ]*\ncommit [a-f0-9]+[ ]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d[ ]*\n(?:.|\n)*?(?=\Z|\n===))"
++ # An arbitrary line of text (works even with ?s)
++ D ARBLINE "[^\n]*(?=\n|\Z)"
++ # Zero or more arbitrary full lines of text.
++ D ARBLINES "(?:(?:.|\n)*(?:\n|\Z)|\A|\Z)"
++ > init
++ + f.txt wug.txt
++ + g.txt notwug.txt
++ > add g.txt
++ > add f.txt
++ > rm f.txt
++ > status
+- === Branches ===
+- *master
+- 
+- === Staged Files ===
+- g.txt
+- 
+- === Removed Files ===
+- 
+- === Modifications Not Staged For Commit ===
+- 
+- === Untracked Files ===
+- f.txt
+- 
++ # bruhhhhhhhhhhhh
++ = f.txt wug.txt
+OK
+test10-remove-add-status:
+Testing directory: test10-remove-add-status_0
++ I commit-2-files.inc
++ # Commit two files.
++ I init-add-2-files.inc
++ I definitions.inc
++ # Standard definitions
++ D DATE "Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A status log header RE.  Captures the commit id in its sole group.
++ D COMMIT_HEAD "commit ([a-f0-9]+)[ \t]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A full log entry.  Captures the entry. Assume logs messages don't contain
++ # "==="
++ D COMMIT_LOG "(===[ ]*\ncommit [a-f0-9]+[ ]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d[ ]*\n(?:.|\n)*?(?=\Z|\n===))"
++ # An arbitrary line of text (works even with ?s)
++ D ARBLINE "[^\n]*(?=\n|\Z)"
++ # Zero or more arbitrary full lines of text.
++ D ARBLINES "(?:(?:.|\n)*(?:\n|\Z)|\A|\Z)"
++ > init
++ + f.txt wug.txt
++ + g.txt notwug.txt
++ > add g.txt
++ > add f.txt
++ > commit "Two files"
++ 
++ > rm f.txt
++ * f.txt
++ + f.txt wug.txt
++ > add f.txt
++ > status
+- === Branches ===
+- *master
+- 
+- === Staged Files ===
+- 
+- === Removed Files ===
+- 
+- === Modifications Not Staged For Commit ===
+- 
+- === Untracked Files ===
+- 
+OK
+test11-remove-commit-status:
+Testing directory: test11-remove-commit-status_0
++ I commit-2-files.inc
++ # Commit two files.
++ I init-add-2-files.inc
++ I definitions.inc
++ # Standard definitions
++ D DATE "Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A status log header RE.  Captures the commit id in its sole group.
++ D COMMIT_HEAD "commit ([a-f0-9]+)[ \t]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A full log entry.  Captures the entry. Assume logs messages don't contain
++ # "==="
++ D COMMIT_LOG "(===[ ]*\ncommit [a-f0-9]+[ ]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d[ ]*\n(?:.|\n)*?(?=\Z|\n===))"
++ # An arbitrary line of text (works even with ?s)
++ D ARBLINE "[^\n]*(?=\n|\Z)"
++ # Zero or more arbitrary full lines of text.
++ D ARBLINES "(?:(?:.|\n)*(?:\n|\Z)|\A|\Z)"
++ > init
++ + f.txt wug.txt
++ + g.txt notwug.txt
++ > add g.txt
++ > add f.txt
++ > commit "Two files"
++ 
++ I blank-status.inc
++ > status
+- === Branches ===
+- *master
+- 
+- === Staged Files ===
+- 
+- === Removed Files ===
+- 
+- === Modifications Not Staged For Commit ===
+- 
+- === Untracked Files ===
+- 
++ > rm f.txt
++ > commit "Removed f.txt"
++ I blank-status.inc
++ > status
+- === Branches ===
+- *master
+- 
+- === Staged Files ===
+- 
+- === Removed Files ===
+- 
+- === Modifications Not Staged For Commit ===
+- 
+- === Untracked Files ===
+- 
+OK
+test12-successful-find:
+Testing directory: test12-successful-find_0
++ I commit-2-files.inc
++ # Commit two files.
++ I init-add-2-files.inc
++ I definitions.inc
++ # Standard definitions
++ D DATE "Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A status log header RE.  Captures the commit id in its sole group.
++ D COMMIT_HEAD "commit ([a-f0-9]+)[ \t]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A full log entry.  Captures the entry. Assume logs messages don't contain
++ # "==="
++ D COMMIT_LOG "(===[ ]*\ncommit [a-f0-9]+[ ]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d[ ]*\n(?:.|\n)*?(?=\Z|\n===))"
++ # An arbitrary line of text (works even with ?s)
++ D ARBLINE "[^\n]*(?=\n|\Z)"
++ # Zero or more arbitrary full lines of text.
++ D ARBLINES "(?:(?:.|\n)*(?:\n|\Z)|\A|\Z)"
++ > init
++ + f.txt wug.txt
++ + g.txt notwug.txt
++ > add g.txt
++ > add f.txt
++ > commit "Two files"
++ 
++ > rm f.txt
++ > commit "Remove one file"
++ + f.txt notwug.txt
++ > add f.txt
++ > commit "Two files"
++ > log
+- ===
+- commit 950bc8babf2145a0f6cf92f7ffd11b98c710acc9
+- Date: Sun Jul 21 02:09:29 2024 +0300
+- Two files
+- 
+- ===
+- commit 1198ddffd0d8c65c0123fbbf9cfb9a75c3b35012
+- Date: Sun Jul 21 02:09:29 2024 +0300
+- Remove one file
+- 
+- ===
+- commit 630b77ab9361827d342f9fe282c9f7243c4e80f3
+- Date: Sun Jul 21 02:09:29 2024 +0300
+- Two files
+- 
+- ===
+- commit f7011bb0c9d9a16990818994b29775d3593e45e2
+- Date: Thu Jan 1 02:00:00 1970 +0200
+- initial commit
+- 
++ # UID of init commit
++ D UID1 "f7011bb0c9d9a16990818994b29775d3593e45e2"
++ # UID of second version
++ D UID2 "630b77ab9361827d342f9fe282c9f7243c4e80f3"
++ # UID of third version
++ D UID3 "1198ddffd0d8c65c0123fbbf9cfb9a75c3b35012"
++ # UID of current version
++ D UID4 "950bc8babf2145a0f6cf92f7ffd11b98c710acc9"
++ > find "Two files"
+- 630b77ab9361827d342f9fe282c9f7243c4e80f3
+- 950bc8babf2145a0f6cf92f7ffd11b98c710acc9
++ > find "initial commit"
+- f7011bb0c9d9a16990818994b29775d3593e45e2
++ > find "Remove one file"
+- 1198ddffd0d8c65c0123fbbf9cfb9a75c3b35012
+OK
+test13-find-err-msg:
+Testing directory: test13-find-err-msg_0
++ I commit-2-files.inc
++ # Commit two files.
++ I init-add-2-files.inc
++ I definitions.inc
++ # Standard definitions
++ D DATE "Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A status log header RE.  Captures the commit id in its sole group.
++ D COMMIT_HEAD "commit ([a-f0-9]+)[ \t]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A full log entry.  Captures the entry. Assume logs messages don't contain
++ # "==="
++ D COMMIT_LOG "(===[ ]*\ncommit [a-f0-9]+[ ]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d[ ]*\n(?:.|\n)*?(?=\Z|\n===))"
++ # An arbitrary line of text (works even with ?s)
++ D ARBLINE "[^\n]*(?=\n|\Z)"
++ # Zero or more arbitrary full lines of text.
++ D ARBLINES "(?:(?:.|\n)*(?:\n|\Z)|\A|\Z)"
++ > init
++ + f.txt wug.txt
++ + g.txt notwug.txt
++ > add g.txt
++ > add f.txt
++ > commit "Two files"
++ 
++ > rm f.txt
++ > commit "Remove one file"
++ > find "Add another file"
+- Found no commit with that message.
+OK
+test14-reset-global-log:
+Testing directory: test14-reset-global-log_0
++ I commit-2-files.inc
++ # Commit two files.
++ I init-add-2-files.inc
++ I definitions.inc
++ # Standard definitions
++ D DATE "Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A status log header RE.  Captures the commit id in its sole group.
++ D COMMIT_HEAD "commit ([a-f0-9]+)[ \t]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A full log entry.  Captures the entry. Assume logs messages don't contain
++ # "==="
++ D COMMIT_LOG "(===[ ]*\ncommit [a-f0-9]+[ ]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d[ ]*\n(?:.|\n)*?(?=\Z|\n===))"
++ # An arbitrary line of text (works even with ?s)
++ D ARBLINE "[^\n]*(?=\n|\Z)"
++ # Zero or more arbitrary full lines of text.
++ D ARBLINES "(?:(?:.|\n)*(?:\n|\Z)|\A|\Z)"
++ > init
++ + f.txt wug.txt
++ + g.txt notwug.txt
++ > add g.txt
++ > add f.txt
++ > commit "Two files"
++ 
++ D DATE1 "Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d"
++ D COMMIT_LOG "(===[ ]*\ncommit [a-f0-9]+[ ]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d) [-+](\d\d\d\d[ ]*\n(?:.|\n)*?(?=\Z|\n===))"
++ + h.txt wug.txt
++ > add h.txt
++ > commit "Add h"
++ > log
+- ===
+- commit 61cdc01b32880bf0c89685cda62c9fc83ce1861c
+- Date: Sun Jul 21 02:09:31 2024 +0300
+- Add h
+- 
+- ===
+- commit 536cd47b22395b7c742ded902476b4ca0eeca86b
+- Date: Sun Jul 21 02:09:31 2024 +0300
+- Two files
+- 
+- ===
+- commit f7011bb0c9d9a16990818994b29775d3593e45e2
+- Date: Thu Jan 1 02:00:00 1970 +0200
+- initial commit
+- 
++ D L1 "===
+commit 61cdc01b32880bf0c89685cda62c9fc83ce1861c
+Date: Sun Jul 21 02:09:31 2024 [-+]0300
+Add h
+"
++ D L2 "===
+commit 536cd47b22395b7c742ded902476b4ca0eeca86b
+Date: Sun Jul 21 02:09:31 2024 [-+]0300
+Two files
+"
++ D L3 "===
+commit f7011bb0c9d9a16990818994b29775d3593e45e2
+Date: Thu Jan 1 02:00:00 1970 [-+]0200
+initial commit
+
+"
++ > log
+- ===
+- commit 61cdc01b32880bf0c89685cda62c9fc83ce1861c
+- Date: Sun Jul 21 02:09:31 2024 +0300
+- Add h
+- 
+- ===
+- commit 536cd47b22395b7c742ded902476b4ca0eeca86b
+- Date: Sun Jul 21 02:09:31 2024 +0300
+- Two files
+- 
+- ===
+- commit f7011bb0c9d9a16990818994b29775d3593e45e2
+- Date: Thu Jan 1 02:00:00 1970 +0200
+- initial commit
+- 
++ D ID "536cd47b22395b7c742ded902476b4ca0eeca86b"
++ > reset 536cd47b22395b7c742ded902476b4ca0eeca86b
++ > global-log
+- ===
+- commit 536cd47b22395b7c742ded902476b4ca0eeca86b
+- Date: Sun Jul 21 02:09:31 2024 +0300
+- Two files
+- 
+- ===
+- commit 61cdc01b32880bf0c89685cda62c9fc83ce1861c
+- Date: Sun Jul 21 02:09:31 2024 +0300
+- Add h
+- 
+- ===
+- commit f7011bb0c9d9a16990818994b29775d3593e45e2
+- Date: Thu Jan 1 02:00:00 1970 +0200
+- initial commit
+- 
+OK
+test15-rm-branch:
+Testing directory: test15-rm-branch_0
++ I definitions.inc
++ # Standard definitions
++ D DATE "Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A status log header RE.  Captures the commit id in its sole group.
++ D COMMIT_HEAD "commit ([a-f0-9]+)[ \t]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A full log entry.  Captures the entry. Assume logs messages don't contain
++ # "==="
++ D COMMIT_LOG "(===[ ]*\ncommit [a-f0-9]+[ ]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d[ ]*\n(?:.|\n)*?(?=\Z|\n===))"
++ # An arbitrary line of text (works even with ?s)
++ D ARBLINE "[^\n]*(?=\n|\Z)"
++ # Zero or more arbitrary full lines of text.
++ D ARBLINES "(?:(?:.|\n)*(?:\n|\Z)|\A|\Z)"
++ > init
++ > branch other
++ + f.txt wug.txt
++ > add f.txt
++ > commit "File f.txt"
++ > checkout other
++ + g.txt notwug.txt
++ > add g.txt
++ > commit "File g.txt"
++ > checkout master
++ > rm-branch other
++ > checkout other
+- No such branch exists.
++ * g.txt
++ = f.txt wug.txt
+OK
+test16-checkout-overwrite-err:
+Testing directory: test16-checkout-overwrite-err_0
++ I definitions.inc
++ # Standard definitions
++ D DATE "Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A status log header RE.  Captures the commit id in its sole group.
++ D COMMIT_HEAD "commit ([a-f0-9]+)[ \t]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A full log entry.  Captures the entry. Assume logs messages don't contain
++ # "==="
++ D COMMIT_LOG "(===[ ]*\ncommit [a-f0-9]+[ ]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d[ ]*\n(?:.|\n)*?(?=\Z|\n===))"
++ # An arbitrary line of text (works even with ?s)
++ D ARBLINE "[^\n]*(?=\n|\Z)"
++ # Zero or more arbitrary full lines of text.
++ D ARBLINES "(?:(?:.|\n)*(?:\n|\Z)|\A|\Z)"
++ > init
++ > branch other
++ + f.txt wug.txt
++ + g.txt notwug.txt
++ > add g.txt
++ > add f.txt
++ > commit "Main two files"
++ E f.txt
++ E g.txt
++ > checkout other
++ + f.txt notwug.txt
++ > checkout master
+- There is an untracked file in the way; delete it, or add and commit it first.
+OK
+test17-reset-err:
+Testing directory: test17-reset-err_0
++ I commit-2-files.inc
++ # Commit two files.
++ I init-add-2-files.inc
++ I definitions.inc
++ # Standard definitions
++ D DATE "Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A status log header RE.  Captures the commit id in its sole group.
++ D COMMIT_HEAD "commit ([a-f0-9]+)[ \t]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A full log entry.  Captures the entry. Assume logs messages don't contain
++ # "==="
++ D COMMIT_LOG "(===[ ]*\ncommit [a-f0-9]+[ ]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d[ ]*\n(?:.|\n)*?(?=\Z|\n===))"
++ # An arbitrary line of text (works even with ?s)
++ D ARBLINE "[^\n]*(?=\n|\Z)"
++ # Zero or more arbitrary full lines of text.
++ D ARBLINES "(?:(?:.|\n)*(?:\n|\Z)|\A|\Z)"
++ > init
++ + f.txt wug.txt
++ + g.txt notwug.txt
++ > add g.txt
++ > add f.txt
++ > commit "Two files"
++ 
++ > branch other
++ + h.txt wug2.txt
++ > add h.txt
++ > rm g.txt
++ > commit "Add h.txt and remove g.txt"
++ > log
+- ===
+- commit 0e078bfa20b73133ed96d014523e7e63cdf68d32
+- Date: Sun Jul 21 02:09:33 2024 +0300
+- Add h.txt and remove g.txt
+- 
+- ===
+- commit 99d44da5bc412a5a3f96baf221f6d41012e6da47
+- Date: Sun Jul 21 02:09:33 2024 +0300
+- Two files
+- 
+- ===
+- commit f7011bb0c9d9a16990818994b29775d3593e45e2
+- Date: Thu Jan 1 02:00:00 1970 +0200
+- initial commit
+- 
++ D INIT "f7011bb0c9d9a16990818994b29775d3593e45e2"
++ D TWO "99d44da5bc412a5a3f96baf221f6d41012e6da47"
++ D MASTER1 "0e078bfa20b73133ed96d014523e7e63cdf68d32"
++ 
++ > checkout other
++ # Almost certain not to exist.
++ > reset 025052f2b193d417df998517a4c539918801b430
+- No commit with that id exists.
++ + h.txt wug3.txt
++ > reset 0e078bfa20b73133ed96d014523e7e63cdf68d32
+- There is an untracked file in the way; delete it, or add and commit it first.
+OK
+test18-reset:
+Testing directory: test18-reset_0
++ I commit-2-files.inc
++ # Commit two files.
++ I init-add-2-files.inc
++ I definitions.inc
++ # Standard definitions
++ D DATE "Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A status log header RE.  Captures the commit id in its sole group.
++ D COMMIT_HEAD "commit ([a-f0-9]+)[ \t]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A full log entry.  Captures the entry. Assume logs messages don't contain
++ # "==="
++ D COMMIT_LOG "(===[ ]*\ncommit [a-f0-9]+[ ]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d[ ]*\n(?:.|\n)*?(?=\Z|\n===))"
++ # An arbitrary line of text (works even with ?s)
++ D ARBLINE "[^\n]*(?=\n|\Z)"
++ # Zero or more arbitrary full lines of text.
++ D ARBLINES "(?:(?:.|\n)*(?:\n|\Z)|\A|\Z)"
++ > init
++ + f.txt wug.txt
++ + g.txt notwug.txt
++ > add g.txt
++ > add f.txt
++ > commit "Two files"
++ 
++ > branch other
++ + h.txt wug2.txt
++ > add h.txt
++ > rm g.txt
++ > commit "Add h.txt and remove g.txt"
++ > checkout other
++ > rm f.txt
++ + k.txt wug3.txt
++ > add k.txt
++ > commit "Add k.txt and remove f.txt"
++ > log
+- ===
+- commit 431c0449d3f879ef1f2c8f9a660666f2f9880936
+- Date: Sun Jul 21 02:09:34 2024 +0300
+- Add k.txt and remove f.txt
+- 
+- ===
+- commit a7c9e62bd4a3b3d31d3b0147e3183095e4917705
+- Date: Sun Jul 21 02:09:34 2024 +0300
+- Two files
+- 
+- ===
+- commit f7011bb0c9d9a16990818994b29775d3593e45e2
+- Date: Thu Jan 1 02:00:00 1970 +0200
+- initial commit
+- 
++ D INIT "f7011bb0c9d9a16990818994b29775d3593e45e2"
++ D TWO "a7c9e62bd4a3b3d31d3b0147e3183095e4917705"
++ D OTHER1 "431c0449d3f879ef1f2c8f9a660666f2f9880936"
++ 
++ > checkout master
++ > log
+- ===
+- commit 7cd700bb70fdb39bab8a250505879e6c46be14b7
+- Date: Sun Jul 21 02:09:34 2024 +0300
+- Add h.txt and remove g.txt
+- 
+- ===
+- commit a7c9e62bd4a3b3d31d3b0147e3183095e4917705
+- Date: Sun Jul 21 02:09:34 2024 +0300
+- Two files
+- 
+- ===
+- commit f7011bb0c9d9a16990818994b29775d3593e45e2
+- Date: Thu Jan 1 02:00:00 1970 +0200
+- initial commit
+- 
++ D MASTER1 "7cd700bb70fdb39bab8a250505879e6c46be14b7"
++ + m.txt wug.txt
++ > add m.txt
++ > reset a7c9e62bd4a3b3d31d3b0147e3183095e4917705
++ > status
+- === Branches ===
+- *master
+- other
+- 
+- === Staged Files ===
+- 
+- === Removed Files ===
+- 
+- === Modifications Not Staged For Commit ===
+- 
+- === Untracked Files ===
+- 
++ 
++ > log
+- ===
+- commit a7c9e62bd4a3b3d31d3b0147e3183095e4917705
+- Date: Sun Jul 21 02:09:34 2024 +0300
+- Two files
+- 
+- ===
+- commit f7011bb0c9d9a16990818994b29775d3593e45e2
+- Date: Thu Jan 1 02:00:00 1970 +0200
+- initial commit
+- 
++ > checkout other
++ > log
+- ===
+- commit 431c0449d3f879ef1f2c8f9a660666f2f9880936
+- Date: Sun Jul 21 02:09:34 2024 +0300
+- Add k.txt and remove f.txt
+- 
+- ===
+- commit a7c9e62bd4a3b3d31d3b0147e3183095e4917705
+- Date: Sun Jul 21 02:09:34 2024 +0300
+- Two files
+- 
+- ===
+- commit f7011bb0c9d9a16990818994b29775d3593e45e2
+- Date: Thu Jan 1 02:00:00 1970 +0200
+- initial commit
+- 
++ > checkout master
++ > log
+- ===
+- commit a7c9e62bd4a3b3d31d3b0147e3183095e4917705
+- Date: Sun Jul 21 02:09:34 2024 +0300
+- Two files
+- 
+- ===
+- commit f7011bb0c9d9a16990818994b29775d3593e45e2
+- Date: Thu Jan 1 02:00:00 1970 +0200
+- initial commit
+- 
++ > reset 7cd700bb70fdb39bab8a250505879e6c46be14b7
++ > log
+- ===
+- commit 7cd700bb70fdb39bab8a250505879e6c46be14b7
+- Date: Sun Jul 21 02:09:34 2024 +0300
+- Add h.txt and remove g.txt
+- 
+- ===
+- commit a7c9e62bd4a3b3d31d3b0147e3183095e4917705
+- Date: Sun Jul 21 02:09:34 2024 +0300
+- Two files
+- 
+- ===
+- commit f7011bb0c9d9a16990818994b29775d3593e45e2
+- Date: Thu Jan 1 02:00:00 1970 +0200
+- initial commit
+- 
+OK
+test19-rm-branch-err:
+Testing directory: test19-rm-branch-err_0
++ I definitions.inc
++ # Standard definitions
++ D DATE "Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A status log header RE.  Captures the commit id in its sole group.
++ D COMMIT_HEAD "commit ([a-f0-9]+)[ \t]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A full log entry.  Captures the entry. Assume logs messages don't contain
++ # "==="
++ D COMMIT_LOG "(===[ ]*\ncommit [a-f0-9]+[ ]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d[ ]*\n(?:.|\n)*?(?=\Z|\n===))"
++ # An arbitrary line of text (works even with ?s)
++ D ARBLINE "[^\n]*(?=\n|\Z)"
++ # Zero or more arbitrary full lines of text.
++ D ARBLINES "(?:(?:.|\n)*(?:\n|\Z)|\A|\Z)"
++ > init
++ > branch other
++ > checkout other
++ + f.txt wug.txt
++ > add f.txt
++ > commit "File f.txt"
++ > rm-branch other
+- Cannot remove the current branch.
++ E f.txt
++ > rm-branch foo
+- A branch with that name does not exist.
+OK
+test20-merge-no-conflicts:
+Testing directory: test20-merge-no-conflicts_0
++ I commit-2-files.inc
++ # Commit two files.
++ I init-add-2-files.inc
++ I definitions.inc
++ # Standard definitions
++ D DATE "Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A status log header RE.  Captures the commit id in its sole group.
++ D COMMIT_HEAD "commit ([a-f0-9]+)[ \t]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A full log entry.  Captures the entry. Assume logs messages don't contain
++ # "==="
++ D COMMIT_LOG "(===[ ]*\ncommit [a-f0-9]+[ ]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d[ ]*\n(?:.|\n)*?(?=\Z|\n===))"
++ # An arbitrary line of text (works even with ?s)
++ D ARBLINE "[^\n]*(?=\n|\Z)"
++ # Zero or more arbitrary full lines of text.
++ D ARBLINES "(?:(?:.|\n)*(?:\n|\Z)|\A|\Z)"
++ > init
++ + f.txt wug.txt
++ + g.txt notwug.txt
++ > add g.txt
++ > add f.txt
++ > commit "Two files"
++ 
++ > branch other
++ + h.txt wug2.txt
++ > add h.txt
++ > rm g.txt
++ > commit "Add h.txt and remove g.txt"
++ > checkout other
++ > rm f.txt
++ + k.txt wug3.txt
++ > add k.txt
++ > commit "Add k.txt and remove f.txt"
++ > checkout master
++ > merge other
++ * f.txt
++ * g.txt
++ = h.txt wug2.txt
++ = k.txt wug3.txt
++ > log
+- ===
+- commit 1f940a216a53039f449fe4f2e706552a34c434ec
+- Date: Sun Jul 21 02:09:37 2024 +0300
+- Merged other into master.
+- 
+- ===
+- commit 75961cadfce81d12a48bcece83a9fd07a2174384
+- Date: Sun Jul 21 02:09:37 2024 +0300
+- Add h.txt and remove g.txt
+- 
+- ===
+- commit 840556941c31549df7e30f468b929754471a6163
+- Date: Sun Jul 21 02:09:37 2024 +0300
+- Two files
+- 
+- ===
+- commit f7011bb0c9d9a16990818994b29775d3593e45e2
+- Date: Thu Jan 1 02:00:00 1970 +0200
+- initial commit
+- 
++ I blank-status2.inc
++ > status
+- === Branches ===
+- *master
+- other
+- 
+- === Staged Files ===
+- 
+- === Removed Files ===
+- 
+- === Modifications Not Staged For Commit ===
+- 
+- === Untracked Files ===
+- 
+OK
+test21-merge-conflict:
+Testing directory: test21-merge-conflict_0
++ I commit-2-files.inc
++ # Commit two files.
++ I init-add-2-files.inc
++ I definitions.inc
++ # Standard definitions
++ D DATE "Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A status log header RE.  Captures the commit id in its sole group.
++ D COMMIT_HEAD "commit ([a-f0-9]+)[ \t]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A full log entry.  Captures the entry. Assume logs messages don't contain
++ # "==="
++ D COMMIT_LOG "(===[ ]*\ncommit [a-f0-9]+[ ]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d[ ]*\n(?:.|\n)*?(?=\Z|\n===))"
++ # An arbitrary line of text (works even with ?s)
++ D ARBLINE "[^\n]*(?=\n|\Z)"
++ # Zero or more arbitrary full lines of text.
++ D ARBLINES "(?:(?:.|\n)*(?:\n|\Z)|\A|\Z)"
++ > init
++ + f.txt wug.txt
++ + g.txt notwug.txt
++ > add g.txt
++ > add f.txt
++ > commit "Two files"
++ 
++ > branch other
++ + h.txt wug2.txt
++ > add h.txt
++ > rm g.txt
++ + f.txt wug2.txt
++ > add f.txt
++ > commit "Add h.txt, remove g.txt, and change f.txt"
++ > checkout other
++ + f.txt notwug.txt
++ > add f.txt
++ + k.txt wug3.txt
++ > add k.txt
++ > commit "Add k.txt and modify f.txt"
++ > checkout master
++ > log
+- ===
+- commit b1c1030378c0bbc5c21738b9cbeb27ec7d54e42f
+- Date: Sun Jul 21 02:09:38 2024 +0300
+- Add h.txt, remove g.txt, and change f.txt
+- 
+- ===
+- commit 2519f757ae64f24e42d606477a48aefcc3e8fe69
+- Date: Sun Jul 21 02:09:38 2024 +0300
+- Two files
+- 
+- ===
+- commit f7011bb0c9d9a16990818994b29775d3593e45e2
+- Date: Thu Jan 1 02:00:00 1970 +0200
+- initial commit
+- 
++ D MASTER_HEAD "b1c1030378c0bbc5c21738b9cbeb27ec7d54e42f"
++ > merge other
+- Encountered a merge conflict.
++ * g.txt
++ = h.txt wug2.txt
++ = k.txt wug3.txt
++ = f.txt conflict1.txt
+ERROR (file f.txt has incorrect content)
+test22-merge-rm-conflict:
+Testing directory: test22-merge-rm-conflict_0
++ I commit-2-files.inc
++ # Commit two files.
++ I init-add-2-files.inc
++ I definitions.inc
++ # Standard definitions
++ D DATE "Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A status log header RE.  Captures the commit id in its sole group.
++ D COMMIT_HEAD "commit ([a-f0-9]+)[ \t]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A full log entry.  Captures the entry. Assume logs messages don't contain
++ # "==="
++ D COMMIT_LOG "(===[ ]*\ncommit [a-f0-9]+[ ]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d[ ]*\n(?:.|\n)*?(?=\Z|\n===))"
++ # An arbitrary line of text (works even with ?s)
++ D ARBLINE "[^\n]*(?=\n|\Z)"
++ # Zero or more arbitrary full lines of text.
++ D ARBLINES "(?:(?:.|\n)*(?:\n|\Z)|\A|\Z)"
++ > init
++ + f.txt wug.txt
++ + g.txt notwug.txt
++ > add g.txt
++ > add f.txt
++ > commit "Two files"
++ 
++ > branch other
++ + h.txt wug2.txt
++ > add h.txt
++ > rm g.txt
++ + f.txt wug2.txt
++ > add f.txt
++ > commit "Add h.txt, remove g.txt, and change f.txt"
++ > checkout other
++ > rm f.txt
++ + k.txt wug3.txt
++ > add k.txt
++ > commit "Add k.txt and remove f.txt"
++ > checkout master
++ > log
+- ===
+- commit 896d31f5932f95d13c44c5cfb7a35cb1a6c99fb5
+- Date: Sun Jul 21 02:09:40 2024 +0300
+- Add h.txt, remove g.txt, and change f.txt
+- 
+- ===
+- commit eb1d6736d912b54f371b1db9eeb3c00b7b500f64
+- Date: Sun Jul 21 02:09:39 2024 +0300
+- Two files
+- 
+- ===
+- commit f7011bb0c9d9a16990818994b29775d3593e45e2
+- Date: Thu Jan 1 02:00:00 1970 +0200
+- initial commit
+- 
++ D MASTER_HEAD "896d31f5932f95d13c44c5cfb7a35cb1a6c99fb5"
++ > merge other
+- Encountered a merge conflict.
++ * g.txt
++ = h.txt wug2.txt
++ = k.txt wug3.txt
++ = f.txt conflict2.txt
+ERROR (file f.txt has incorrect content)
+test23-merge-parent:
+Testing directory: test23-merge-parent_0
++ I definitions.inc
++ # Standard definitions
++ D DATE "Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A status log header RE.  Captures the commit id in its sole group.
++ D COMMIT_HEAD "commit ([a-f0-9]+)[ \t]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A full log entry.  Captures the entry. Assume logs messages don't contain
++ # "==="
++ D COMMIT_LOG "(===[ ]*\ncommit [a-f0-9]+[ ]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d[ ]*\n(?:.|\n)*?(?=\Z|\n===))"
++ # An arbitrary line of text (works even with ?s)
++ D ARBLINE "[^\n]*(?=\n|\Z)"
++ # Zero or more arbitrary full lines of text.
++ D ARBLINES "(?:(?:.|\n)*(?:\n|\Z)|\A|\Z)"
++ > init
++ > branch B1
++ > branch B2
++ > checkout B1
++ + h.txt wug.txt
++ > add h.txt
++ > commit "Add h.txt"
++ > checkout B2
++ + f.txt wug.txt
++ > add f.txt
++ > commit "f.txt added"
++ > branch C1
++ + g.txt notwug.txt
++ > add g.txt
++ > rm f.txt
++ > commit "g.txt added, f.txt removed"
++ = g.txt notwug.txt
++ * f.txt
++ * h.txt
++ > checkout B1
++ = h.txt wug.txt
++ * f.txt
++ * g.txt
++ > merge C1
++ = f.txt wug.txt
++ = h.txt wug.txt
++ * g.txt
++ > merge B2
++ * f.txt
++ = g.txt notwug.txt
++ = h.txt wug.txt
+OK
+test24-godly-split:
+Testing directory: test24-godly-split_0
++ I commit-2-files.inc
++ # Commit two files.
++ I init-add-2-files.inc
++ I definitions.inc
++ # Standard definitions
++ D DATE "Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A status log header RE.  Captures the commit id in its sole group.
++ D COMMIT_HEAD "commit ([a-f0-9]+)[ \t]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A full log entry.  Captures the entry. Assume logs messages don't contain
++ # "==="
++ D COMMIT_LOG "(===[ ]*\ncommit [a-f0-9]+[ ]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d[ ]*\n(?:.|\n)*?(?=\Z|\n===))"
++ # An arbitrary line of text (works even with ?s)
++ D ARBLINE "[^\n]*(?=\n|\Z)"
++ # Zero or more arbitrary full lines of text.
++ D ARBLINES "(?:(?:.|\n)*(?:\n|\Z)|\A|\Z)"
++ > init
++ + f.txt wug.txt
++ + g.txt notwug.txt
++ > add g.txt
++ > add f.txt
++ > commit "Two files"
++ 
++ > branch other
++ + h.txt wug2.txt
++ > add h.txt
++ > commit "Added h.txt"
++ > checkout other
++ > rm f.txt
++ > commit "Removed f.txt"
++ * f.txt
++ E g.txt
++ > branch godlyOther
++ + k.txt wug3.txt
++ > add k.txt
++ > commit "Added k.txt"
++ > checkout master
++ > merge other
++ > status
+- === Branches ===
+- godlyOther
+- *master
+- other
+- 
+- === Staged Files ===
+- 
+- === Removed Files ===
+- 
+- === Modifications Not Staged For Commit ===
+- g.txt (modified)
+- 
+- === Untracked Files ===
+- 
+ERROR (incorrect output)
+test25-devily-split:
+Testing directory: test25-devily-split_0
++ I commit-2-files.inc
++ # Commit two files.
++ I init-add-2-files.inc
++ I definitions.inc
++ # Standard definitions
++ D DATE "Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A status log header RE.  Captures the commit id in its sole group.
++ D COMMIT_HEAD "commit ([a-f0-9]+)[ \t]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A full log entry.  Captures the entry. Assume logs messages don't contain
++ # "==="
++ D COMMIT_LOG "(===[ ]*\ncommit [a-f0-9]+[ ]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d[ ]*\n(?:.|\n)*?(?=\Z|\n===))"
++ # An arbitrary line of text (works even with ?s)
++ D ARBLINE "[^\n]*(?=\n|\Z)"
++ # Zero or more arbitrary full lines of text.
++ D ARBLINES "(?:(?:.|\n)*(?:\n|\Z)|\A|\Z)"
++ > init
++ + f.txt wug.txt
++ + g.txt notwug.txt
++ > add g.txt
++ > add f.txt
++ > commit "Two files"
++ 
++ > branch other
++ + h.txt wug2.txt
++ > add h.txt
++ > rm g.txt
++ > commit "Added h.txt and removed g.txt"
++ > checkout other
++ > rm f.txt
++ > commit "Removed f.txt"
++ * f.txt
++ E g.txt
++ > checkout master
++ > merge other
++ * f.txt
++ * g.txt
++ E h.txt
++ = h.txt wug2.txt
++ > branch devilBranch
++ + k.txt notwug.txt
++ > add k.txt
++ > commit "Added k.txt"
++ > checkout devilBranch
++ + a.txt wug.txt
++ > add a.txt
++ > commit "Added a.txt"
++ > checkout master
++ > merge devilBranch
++ * f.txt
++ * g.txt
++ E h.txt
++ E a.txt
+OK
+test26-gg:
+Testing directory: test26-gg_0
++ I commit-2-files.inc
++ # Commit two files.
++ I init-add-2-files.inc
++ I definitions.inc
++ # Standard definitions
++ D DATE "Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A status log header RE.  Captures the commit id in its sole group.
++ D COMMIT_HEAD "commit ([a-f0-9]+)[ \t]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A full log entry.  Captures the entry. Assume logs messages don't contain
++ # "==="
++ D COMMIT_LOG "(===[ ]*\ncommit [a-f0-9]+[ ]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d[ ]*\n(?:.|\n)*?(?=\Z|\n===))"
++ # An arbitrary line of text (works even with ?s)
++ D ARBLINE "[^\n]*(?=\n|\Z)"
++ # Zero or more arbitrary full lines of text.
++ D ARBLINES "(?:(?:.|\n)*(?:\n|\Z)|\A|\Z)"
++ > init
++ + f.txt wug.txt
++ + g.txt notwug.txt
++ > add g.txt
++ > add f.txt
++ > commit "Two files"
++ 
++ > branch other
++ + h.txt wug2.txt
++ > add h.txt
++ > rm g.txt
++ > commit "Added h.txt and removed g.txt"
++ > checkout other
++ > rm f.txt
++ > commit "Removed f.txt"
++ * f.txt
++ E g.txt
++ > checkout master
++ > merge other
++ * f.txt
++ * g.txt
++ E h.txt
++ = h.txt wug2.txt
++ > checkout other
++ + f.txt wug3.txt
++ > add f.txt
++ > commit "Added f.txt back"
++ > checkout master
++ > merge other
++ * g.txt
++ E h.txt
++ = h.txt wug2.txt
++ E f.txt
++ = f.txt wug3.txt
+OK
+test27-mmsp:
+Testing directory: test27-mmsp_0
++ I commit-2-files.inc
++ # Commit two files.
++ I init-add-2-files.inc
++ I definitions.inc
++ # Standard definitions
++ D DATE "Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A status log header RE.  Captures the commit id in its sole group.
++ D COMMIT_HEAD "commit ([a-f0-9]+)[ \t]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A full log entry.  Captures the entry. Assume logs messages don't contain
++ # "==="
++ D COMMIT_LOG "(===[ ]*\ncommit [a-f0-9]+[ ]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d[ ]*\n(?:.|\n)*?(?=\Z|\n===))"
++ # An arbitrary line of text (works even with ?s)
++ D ARBLINE "[^\n]*(?=\n|\Z)"
++ # Zero or more arbitrary full lines of text.
++ D ARBLINES "(?:(?:.|\n)*(?:\n|\Z)|\A|\Z)"
++ > init
++ + f.txt wug.txt
++ + g.txt notwug.txt
++ > add g.txt
++ > add f.txt
++ > commit "Two files"
++ 
++ > branch other
++ + h.txt wug2.txt
++ > add h.txt
++ > commit "Added h.txt"
++ > checkout other
++ > rm f.txt
++ > commit "Removed f.txt"
++ * f.txt
++ E g.txt
++ > branch godlyOther
++ + k.txt wug3.txt
++ > add k.txt
++ > commit "Added k.txt"
++ > merge master
++ > status
+- === Branches ===
+- godlyOther
+- master
+- *other
+- 
+- === Staged Files ===
+- 
+- === Removed Files ===
+- 
+- === Modifications Not Staged For Commit ===
+- g.txt (modified)
+- 
+- === Untracked Files ===
+- 
+ERROR (incorrect output)
+test28-final:
+Testing directory: test28-final_0
++ I commit-2-files.inc
++ # Commit two files.
++ I init-add-2-files.inc
++ I definitions.inc
++ # Standard definitions
++ D DATE "Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A status log header RE.  Captures the commit id in its sole group.
++ D COMMIT_HEAD "commit ([a-f0-9]+)[ \t]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A full log entry.  Captures the entry. Assume logs messages don't contain
++ # "==="
++ D COMMIT_LOG "(===[ ]*\ncommit [a-f0-9]+[ ]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d[ ]*\n(?:.|\n)*?(?=\Z|\n===))"
++ # An arbitrary line of text (works even with ?s)
++ D ARBLINE "[^\n]*(?=\n|\Z)"
++ # Zero or more arbitrary full lines of text.
++ D ARBLINES "(?:(?:.|\n)*(?:\n|\Z)|\A|\Z)"
++ > init
++ + f.txt wug.txt
++ + g.txt notwug.txt
++ > add g.txt
++ > add f.txt
++ > commit "Two files"
++ 
++ > branch other
++ > branch nextOther
++ > rm f.txt
++ > commit "Removed f.txt"
++ > merge other
+- Given branch is an ancestor of the current branch.
++ > checkout nextOther
++ > rm g.txt
++ > commit "Removed g.txt"
++ > checkout other
++ > merge nextOther
+- Current branch fast-forwarded.
+OK
+test29-dandaryilar:
+Testing directory: test29-dandaryilar_0
++ I commit-2-files.inc
++ # Commit two files.
++ I init-add-2-files.inc
++ I definitions.inc
++ # Standard definitions
++ D DATE "Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A status log header RE.  Captures the commit id in its sole group.
++ D COMMIT_HEAD "commit ([a-f0-9]+)[ \t]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A full log entry.  Captures the entry. Assume logs messages don't contain
++ # "==="
++ D COMMIT_LOG "(===[ ]*\ncommit [a-f0-9]+[ ]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d[ ]*\n(?:.|\n)*?(?=\Z|\n===))"
++ # An arbitrary line of text (works even with ?s)
++ D ARBLINE "[^\n]*(?=\n|\Z)"
++ # Zero or more arbitrary full lines of text.
++ D ARBLINES "(?:(?:.|\n)*(?:\n|\Z)|\A|\Z)"
++ > init
++ + f.txt wug.txt
++ + g.txt notwug.txt
++ > add g.txt
++ > add f.txt
++ > commit "Two files"
++ 
++ > branch other
++ > rm f.txt
++ > rm g.txt
++ + h.txt wug2.txt
++ > add h.txt
++ > commit "Removed both files and added h.txt"
++ > branch danDarYiLar
++ > rm h.txt
++ > commit "Removed h.txt too :V"
++ > checkout other
++ + f.txt notwug.txt
++ > add f.txt
++ > rm g.txt
++ > commit "Removed g.txt and fixed f.txt"
++ > checkout danDarYiLar
++ > merge other
+- Encountered a merge conflict.
++ E h.txt
++ E f.txt
++ = h.txt wug2.txt
++ = f.txt conflict3.txt
+ERROR (file f.txt has incorrect content)
+test30-final-bug:
+Testing directory: test30-final-bug_0
++ I commit-2-files.inc
++ # Commit two files.
++ I init-add-2-files.inc
++ I definitions.inc
++ # Standard definitions
++ D DATE "Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A status log header RE.  Captures the commit id in its sole group.
++ D COMMIT_HEAD "commit ([a-f0-9]+)[ \t]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A full log entry.  Captures the entry. Assume logs messages don't contain
++ # "==="
++ D COMMIT_LOG "(===[ ]*\ncommit [a-f0-9]+[ ]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d[ ]*\n(?:.|\n)*?(?=\Z|\n===))"
++ # An arbitrary line of text (works even with ?s)
++ D ARBLINE "[^\n]*(?=\n|\Z)"
++ # Zero or more arbitrary full lines of text.
++ D ARBLINES "(?:(?:.|\n)*(?:\n|\Z)|\A|\Z)"
++ > init
++ + f.txt wug.txt
++ + g.txt notwug.txt
++ > add g.txt
++ > add f.txt
++ > commit "Two files"
++ 
++ > branch other
++ > rm f.txt
++ > rm g.txt
++ + h.txt wug2.txt
++ > add h.txt
++ > commit "Removed both files and added h.txt"
++ > branch danDarYiLar
++ > rm h.txt
++ > commit "Removed h.txt too :V"
++ > checkout other
++ + f.txt notwug.txt
++ > add f.txt
++ > rm g.txt
++ > commit "Removed g.txt and fixed f.txt"
++ > branch legendary
++ > rm f.txt
++ > commit "Removed fixed f.txt"
++ > checkout danDarYiLar
++ > merge legendary
+- Encountered a merge conflict.
++ E h.txt
++ E f.txt
++ = h.txt wug2.txt
++ = f.txt conflict3.txt
+ERROR (file f.txt has incorrect content)
+
+Ran 30 tests. 24 passed.
+make[1]: Leaving directory '/home/agx/Desktop/CS61B/CS61B/proj2/testing'
+"make" -C gitlet default
+make[1]: Entering directory '/home/agx/Desktop/CS61B/CS61B/proj2/gitlet'
+javac -g -Xlint:unchecked -Xlint:deprecation -cp "../../library-sp21/javalib/*:..::;../../library-sp21/javalib/*;..;" Blob.java Commit.java Dumpable.java DumpObj.java GitletException.java Main.java Repository.java Utils.java
+touch sentinel
+make[1]: Leaving directory '/home/agx/Desktop/CS61B/CS61B/proj2/gitlet'
+"make" -C testing PYTHON=python3 TESTER_FLAGS="--verbose" check
+make[1]: Entering directory '/home/agx/Desktop/CS61B/CS61B/proj2/testing'
+Testing application gitlet.Main...
+CLASSPATH="$(pwd)/..::;$(pwd)/..;" python3 tester.py --verbose samples/*.in student_tests/*.in *.in
+test01-init:
+Testing directory: test01-init_0
++ # Basic initialization
++ > init
++ E .gitlet
+OK
+test02-basic-checkout:
+Testing directory: test02-basic-checkout_0
++ # A simple test of adding, committing, modifying, and checking out.
++ > init
++ + wug.txt wug.txt
++ > add wug.txt
++ > commit "added wug"
++ + wug.txt notwug.txt
++ # Must change
++ > checkout -- wug.txt
++ = wug.txt wug.txt
+OK
+test03-basic-log:
+Testing directory: test03-basic-log_0
++ # Set up a simple chain of commits and check their log.
++ I definitions.inc
++ # Standard definitions
++ D DATE "Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A status log header RE.  Captures the commit id in its sole group.
++ D COMMIT_HEAD "commit ([a-f0-9]+)[ \t]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]  *\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A full log entry.  Captures the entry. Assume logs messages don't contain
++ # "==="
++ D COMMIT_LOG "(===[ ]*\ncommit [a-f0-9]+[ ]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d[ ]*\n(?:.|\n)*?(?=\Z|\n===))"
++ # An arbitrary line of text (works even with ?s)
++ D ARBLINE "[^\n]*(?=\n|\Z)"
++ # Zero or more arbitrary full lines of text.
++ D ARBLINES "(?:(?:.|\n)*(?:\n|\Z)|\A|\Z)"
++ > init
++ + wug.txt wug.txt
++ > add wug.txt
++ > commit "added wug"
++ > log
+- ===
+- commit d88f290b3184d6e40dcfb482dd1cb407a00ca133
+- Date: Sun Jul 21 02:21:39 2024 +0300
+- added wug
+- 
+- ===
+- commit f7011bb0c9d9a16990818994b29775d3593e45e2
+- Date: Thu Jan 1 02:00:00 1970 +0200
+- initial commit
+- 
+OK
+test04-prev-checkout:
+Testing directory: test04-prev-checkout_0
++ # Check that we can check out a previous version.
++ I definitions.inc
++ # Standard definitions
++ D DATE "Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A status log header RE.  Captures the commit id in its sole group.
++ D COMMIT_HEAD "commit ([a-f0-9]+)[ \t]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]  *\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A full log entry.  Captures the entry. Assume logs messages don't contain
++ # "==="
++ D COMMIT_LOG "(===[ ]*\ncommit [a-f0-9]+[ ]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d[ ]*\n(?:.|\n)*?(?=\Z|\n===))"
++ # An arbitrary line of text (works even with ?s)
++ D ARBLINE "[^\n]*(?=\n|\Z)"
++ # Zero or more arbitrary full lines of text.
++ D ARBLINES "(?:(?:.|\n)*(?:\n|\Z)|\A|\Z)"
++ > init
++ + wug.txt wug.txt
++ > add wug.txt
++ > commit "version 1 of wug.txt"
++ + wug.txt notwug.txt
++ > add wug.txt
++ > commit "version 2 of wug.txt"
++ = wug.txt notwug.txt
++ # Each ${COMMIT_HEAD} captures its commit UID.
++ > log
+- ===
+- commit 4da59792ed13be9586d75f535f87f03ca7d0876e
+- Date: Sun Jul 21 02:21:40 2024 +0300
+- version 2 of wug.txt
+- 
+- ===
+- commit 4bd1298c0f7dc21f3df3e13894cb8bbfeb46a714
+- Date: Sun Jul 21 02:21:39 2024 +0300
+- version 1 of wug.txt
+- 
+- ===
+- commit f7011bb0c9d9a16990818994b29775d3593e45e2
+- Date: Thu Jan 1 02:00:00 1970 +0200
+- initial commit
+- 
++ # UID of second version
++ D UID2 "4da59792ed13be9586d75f535f87f03ca7d0876e"
++ # UID of current version
++ D UID1 "4bd1298c0f7dc21f3df3e13894cb8bbfeb46a714"
++ > checkout 4bd1298c0f7dc21f3df3e13894cb8bbfeb46a714 -- wug.txt
++ = wug.txt wug.txt
++ > checkout 4da59792ed13be9586d75f535f87f03ca7d0876e -- wug.txt
++ = wug.txt notwug.txt
+OK
+test05-bad-checkouts-err:
+Testing directory: test05-bad-checkouts-err_0
++ # Check that we can check out a previous version.
++ I definitions.inc
++ # Standard definitions
++ D DATE "Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A status log header RE.  Captures the commit id in its sole group.
++ D COMMIT_HEAD "commit ([a-f0-9]+)[ \t]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A full log entry.  Captures the entry. Assume logs messages don't contain
++ # "==="
++ D COMMIT_LOG "(===[ ]*\ncommit [a-f0-9]+[ ]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d[ ]*\n(?:.|\n)*?(?=\Z|\n===))"
++ # An arbitrary line of text (works even with ?s)
++ D ARBLINE "[^\n]*(?=\n|\Z)"
++ # Zero or more arbitrary full lines of text.
++ D ARBLINES "(?:(?:.|\n)*(?:\n|\Z)|\A|\Z)"
++ > init
++ + wug.txt wug.txt
++ > add wug.txt
++ > commit "version 1 of wug.txt"
++ + wug.txt notwug.txt
++ > add wug.txt
++ > commit "version 2 of wug.txt"
++ > log
+- ===
+- commit 45f0a669d800eae573178b3b0db9eb9696f3db2f
+- Date: Sun Jul 21 02:21:40 2024 +0300
+- version 2 of wug.txt
+- 
+- ===
+- commit 5db950bef01177c2163ca8a40e30584f8cb8c76a
+- Date: Sun Jul 21 02:21:40 2024 +0300
+- version 1 of wug.txt
+- 
+- ===
+- commit f7011bb0c9d9a16990818994b29775d3593e45e2
+- Date: Thu Jan 1 02:00:00 1970 +0200
+- initial commit
+- 
++ # UID of second version
++ D UID2 "45f0a669d800eae573178b3b0db9eb9696f3db2f"
++ # UID of first version
++ D UID1 "5db950bef01177c2163ca8a40e30584f8cb8c76a"
++ > checkout 45f0a669d800eae573178b3b0db9eb9696f3db2f -- warg.txt
+- File does not exist in that commit.
++ > checkout 5d0bc169a1737e955f9cb26b9e7aa21e4afd4d12 -- wug.txt
+- No commit with that id exists.
++ > checkout foobar
+- No such branch exists.
++ > checkout master
+- No need to checkout the current branch.
+OK
+test06-global-log:
+Testing directory: test06-global-log_0
++ #Check global log
++ 
++ I commit-2-files.inc
++ # Commit two files.
++ I init-add-2-files.inc
++ I definitions.inc
++ # Standard definitions
++ D DATE "Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A status log header RE.  Captures the commit id in its sole group.
++ D COMMIT_HEAD "commit ([a-f0-9]+)[ \t]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A full log entry.  Captures the entry. Assume logs messages don't contain
++ # "==="
++ D COMMIT_LOG "(===[ ]*\ncommit [a-f0-9]+[ ]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d[ ]*\n(?:.|\n)*?(?=\Z|\n===))"
++ # An arbitrary line of text (works even with ?s)
++ D ARBLINE "[^\n]*(?=\n|\Z)"
++ # Zero or more arbitrary full lines of text.
++ D ARBLINES "(?:(?:.|\n)*(?:\n|\Z)|\A|\Z)"
++ > init
++ + f.txt wug.txt
++ + g.txt notwug.txt
++ > add g.txt
++ > add f.txt
++ > commit "Two files"
++ 
++ D DATE1 "Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d"
++ D COMMIT_LOG "(===[ ]*\ncommit [a-f0-9]+[ ]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d) [-+](\d\d\d\d[ ]*\n(?:.|\n)*?(?=\Z|\n===))"
++ + h.txt wug.txt
++ > add h.txt
++ > commit "Add h"
++ > log
+- ===
+- commit b4f04872eb1a963e9ae679f8ee36d4dabf564aab
+- Date: Sun Jul 21 02:21:41 2024 +0300
+- Add h
+- 
+- ===
+- commit 09906ebd61901cfb67127dd23ce68628835a8f5b
+- Date: Sun Jul 21 02:21:41 2024 +0300
+- Two files
+- 
+- ===
+- commit f7011bb0c9d9a16990818994b29775d3593e45e2
+- Date: Thu Jan 1 02:00:00 1970 +0200
+- initial commit
+- 
++ D L1 "===
+commit b4f04872eb1a963e9ae679f8ee36d4dabf564aab
+Date: Sun Jul 21 02:21:41 2024 [-+]0300
+Add h
+"
++ D L2 "===
+commit 09906ebd61901cfb67127dd23ce68628835a8f5b
+Date: Sun Jul 21 02:21:41 2024 [-+]0300
+Two files
+"
++ D L3 "===
+commit f7011bb0c9d9a16990818994b29775d3593e45e2
+Date: Thu Jan 1 02:00:00 1970 [-+]0200
+initial commit
+
+"
++ > global-log
+- ===
+- commit 09906ebd61901cfb67127dd23ce68628835a8f5b
+- Date: Sun Jul 21 02:21:41 2024 +0300
+- Two files
+- 
+- ===
+- commit b4f04872eb1a963e9ae679f8ee36d4dabf564aab
+- Date: Sun Jul 21 02:21:41 2024 +0300
+- Add h
+- 
+- ===
+- commit f7011bb0c9d9a16990818994b29775d3593e45e2
+- Date: Thu Jan 1 02:00:00 1970 +0200
+- initial commit
+- 
++ > global-log
+- ===
+- commit 09906ebd61901cfb67127dd23ce68628835a8f5b
+- Date: Sun Jul 21 02:21:41 2024 +0300
+- Two files
+- 
+- ===
+- commit b4f04872eb1a963e9ae679f8ee36d4dabf564aab
+- Date: Sun Jul 21 02:21:41 2024 +0300
+- Add h
+- 
+- ===
+- commit f7011bb0c9d9a16990818994b29775d3593e45e2
+- Date: Thu Jan 1 02:00:00 1970 +0200
+- initial commit
+- 
++ > global-log
+- ===
+- commit 09906ebd61901cfb67127dd23ce68628835a8f5b
+- Date: Sun Jul 21 02:21:41 2024 +0300
+- Two files
+- 
+- ===
+- commit b4f04872eb1a963e9ae679f8ee36d4dabf564aab
+- Date: Sun Jul 21 02:21:41 2024 +0300
+- Add h
+- 
+- ===
+- commit f7011bb0c9d9a16990818994b29775d3593e45e2
+- Date: Thu Jan 1 02:00:00 1970 +0200
+- initial commit
+- 
+OK
+test07-status-2-add:
+Testing directory: test07-status-2-add_0
++ # Status with two adds
++ I init-add-2-files.inc
++ I definitions.inc
++ # Standard definitions
++ D DATE "Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A status log header RE.  Captures the commit id in its sole group.
++ D COMMIT_HEAD "commit ([a-f0-9]+)[ \t]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A full log entry.  Captures the entry. Assume logs messages don't contain
++ # "==="
++ D COMMIT_LOG "(===[ ]*\ncommit [a-f0-9]+[ ]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d[ ]*\n(?:.|\n)*?(?=\Z|\n===))"
++ # An arbitrary line of text (works even with ?s)
++ D ARBLINE "[^\n]*(?=\n|\Z)"
++ # Zero or more arbitrary full lines of text.
++ D ARBLINES "(?:(?:.|\n)*(?:\n|\Z)|\A|\Z)"
++ > init
++ + f.txt wug.txt
++ + g.txt notwug.txt
++ > add g.txt
++ > add f.txt
++ > status
+- === Branches ===
+- *master
+- 
+- === Staged Files ===
+- f.txt
+- g.txt
+- 
+- === Removed Files ===
+- 
+- === Modifications Not Staged For Commit ===
+- 
+- === Untracked Files ===
+- 
++ 
+OK
+test08-untracked:
+Testing directory: test08-untracked_0
++ I definitions.inc
++ # Standard definitions
++ D DATE "Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A status log header RE.  Captures the commit id in its sole group.
++ D COMMIT_HEAD "commit ([a-f0-9]+)[ \t]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A full log entry.  Captures the entry. Assume logs messages don't contain
++ # "==="
++ D COMMIT_LOG "(===[ ]*\ncommit [a-f0-9]+[ ]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d[ ]*\n(?:.|\n)*?(?=\Z|\n===))"
++ # An arbitrary line of text (works even with ?s)
++ D ARBLINE "[^\n]*(?=\n|\Z)"
++ # Zero or more arbitrary full lines of text.
++ D ARBLINES "(?:(?:.|\n)*(?:\n|\Z)|\A|\Z)"
++ > init
++ + f.txt wug.txt
++ > status
+- === Branches ===
+- *master
+- 
+- === Staged Files ===
+- 
+- === Removed Files ===
+- 
+- === Modifications Not Staged For Commit ===
+- 
+- === Untracked Files ===
+- f.txt
+- 
++ > add f.txt
++ > commit "Add f"
++ + f.txt notwug.txt
++ > status
+- === Branches ===
+- *master
+- 
+- === Staged Files ===
+- 
+- === Removed Files ===
+- 
+- === Modifications Not Staged For Commit ===
+- f.txt (modified)
+- 
+- === Untracked Files ===
+- 
++ - f.txt
++ > status
+- === Branches ===
+- *master
+- 
+- === Staged Files ===
+- 
+- === Removed Files ===
+- 
+- === Modifications Not Staged For Commit ===
+- f.txt (deleted)
+- 
+- === Untracked Files ===
+- 
+OK
+test09-add-remove-status:
+Testing directory: test09-add-remove-status_0
++ I init-add-2-files.inc
++ I definitions.inc
++ # Standard definitions
++ D DATE "Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A status log header RE.  Captures the commit id in its sole group.
++ D COMMIT_HEAD "commit ([a-f0-9]+)[ \t]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A full log entry.  Captures the entry. Assume logs messages don't contain
++ # "==="
++ D COMMIT_LOG "(===[ ]*\ncommit [a-f0-9]+[ ]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d[ ]*\n(?:.|\n)*?(?=\Z|\n===))"
++ # An arbitrary line of text (works even with ?s)
++ D ARBLINE "[^\n]*(?=\n|\Z)"
++ # Zero or more arbitrary full lines of text.
++ D ARBLINES "(?:(?:.|\n)*(?:\n|\Z)|\A|\Z)"
++ > init
++ + f.txt wug.txt
++ + g.txt notwug.txt
++ > add g.txt
++ > add f.txt
++ > rm f.txt
++ > status
+- === Branches ===
+- *master
+- 
+- === Staged Files ===
+- g.txt
+- 
+- === Removed Files ===
+- 
+- === Modifications Not Staged For Commit ===
+- 
+- === Untracked Files ===
+- f.txt
+- 
++ # bruhhhhhhhhhhhh
++ = f.txt wug.txt
+OK
+test10-remove-add-status:
+Testing directory: test10-remove-add-status_0
++ I commit-2-files.inc
++ # Commit two files.
++ I init-add-2-files.inc
++ I definitions.inc
++ # Standard definitions
++ D DATE "Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A status log header RE.  Captures the commit id in its sole group.
++ D COMMIT_HEAD "commit ([a-f0-9]+)[ \t]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A full log entry.  Captures the entry. Assume logs messages don't contain
++ # "==="
++ D COMMIT_LOG "(===[ ]*\ncommit [a-f0-9]+[ ]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d[ ]*\n(?:.|\n)*?(?=\Z|\n===))"
++ # An arbitrary line of text (works even with ?s)
++ D ARBLINE "[^\n]*(?=\n|\Z)"
++ # Zero or more arbitrary full lines of text.
++ D ARBLINES "(?:(?:.|\n)*(?:\n|\Z)|\A|\Z)"
++ > init
++ + f.txt wug.txt
++ + g.txt notwug.txt
++ > add g.txt
++ > add f.txt
++ > commit "Two files"
++ 
++ > rm f.txt
++ * f.txt
++ + f.txt wug.txt
++ > add f.txt
++ > status
+- === Branches ===
+- *master
+- 
+- === Staged Files ===
+- 
+- === Removed Files ===
+- 
+- === Modifications Not Staged For Commit ===
+- 
+- === Untracked Files ===
+- 
+OK
+test11-remove-commit-status:
+Testing directory: test11-remove-commit-status_0
++ I commit-2-files.inc
++ # Commit two files.
++ I init-add-2-files.inc
++ I definitions.inc
++ # Standard definitions
++ D DATE "Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A status log header RE.  Captures the commit id in its sole group.
++ D COMMIT_HEAD "commit ([a-f0-9]+)[ \t]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A full log entry.  Captures the entry. Assume logs messages don't contain
++ # "==="
++ D COMMIT_LOG "(===[ ]*\ncommit [a-f0-9]+[ ]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d[ ]*\n(?:.|\n)*?(?=\Z|\n===))"
++ # An arbitrary line of text (works even with ?s)
++ D ARBLINE "[^\n]*(?=\n|\Z)"
++ # Zero or more arbitrary full lines of text.
++ D ARBLINES "(?:(?:.|\n)*(?:\n|\Z)|\A|\Z)"
++ > init
++ + f.txt wug.txt
++ + g.txt notwug.txt
++ > add g.txt
++ > add f.txt
++ > commit "Two files"
++ 
++ I blank-status.inc
++ > status
+- === Branches ===
+- *master
+- 
+- === Staged Files ===
+- 
+- === Removed Files ===
+- 
+- === Modifications Not Staged For Commit ===
+- 
+- === Untracked Files ===
+- 
++ > rm f.txt
++ > commit "Removed f.txt"
++ I blank-status.inc
++ > status
+- === Branches ===
+- *master
+- 
+- === Staged Files ===
+- 
+- === Removed Files ===
+- 
+- === Modifications Not Staged For Commit ===
+- 
+- === Untracked Files ===
+- 
+OK
+test12-successful-find:
+Testing directory: test12-successful-find_0
++ I commit-2-files.inc
++ # Commit two files.
++ I init-add-2-files.inc
++ I definitions.inc
++ # Standard definitions
++ D DATE "Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A status log header RE.  Captures the commit id in its sole group.
++ D COMMIT_HEAD "commit ([a-f0-9]+)[ \t]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A full log entry.  Captures the entry. Assume logs messages don't contain
++ # "==="
++ D COMMIT_LOG "(===[ ]*\ncommit [a-f0-9]+[ ]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d[ ]*\n(?:.|\n)*?(?=\Z|\n===))"
++ # An arbitrary line of text (works even with ?s)
++ D ARBLINE "[^\n]*(?=\n|\Z)"
++ # Zero or more arbitrary full lines of text.
++ D ARBLINES "(?:(?:.|\n)*(?:\n|\Z)|\A|\Z)"
++ > init
++ + f.txt wug.txt
++ + g.txt notwug.txt
++ > add g.txt
++ > add f.txt
++ > commit "Two files"
++ 
++ > rm f.txt
++ > commit "Remove one file"
++ + f.txt notwug.txt
++ > add f.txt
++ > commit "Two files"
++ > log
+- ===
+- commit 0fd91e93c2dedc070be0b7919eb8a7071dc59358
+- Date: Sun Jul 21 02:21:45 2024 +0300
+- Two files
+- 
+- ===
+- commit cc34629465ff0bb4873fc0acdb8fd96c820339c2
+- Date: Sun Jul 21 02:21:45 2024 +0300
+- Remove one file
+- 
+- ===
+- commit 4a1cc1df5dfc206fbca959a9a691d10782258f47
+- Date: Sun Jul 21 02:21:45 2024 +0300
+- Two files
+- 
+- ===
+- commit f7011bb0c9d9a16990818994b29775d3593e45e2
+- Date: Thu Jan 1 02:00:00 1970 +0200
+- initial commit
+- 
++ # UID of init commit
++ D UID1 "f7011bb0c9d9a16990818994b29775d3593e45e2"
++ # UID of second version
++ D UID2 "4a1cc1df5dfc206fbca959a9a691d10782258f47"
++ # UID of third version
++ D UID3 "cc34629465ff0bb4873fc0acdb8fd96c820339c2"
++ # UID of current version
++ D UID4 "0fd91e93c2dedc070be0b7919eb8a7071dc59358"
++ > find "Two files"
+- 0fd91e93c2dedc070be0b7919eb8a7071dc59358
+- 4a1cc1df5dfc206fbca959a9a691d10782258f47
++ > find "initial commit"
+- f7011bb0c9d9a16990818994b29775d3593e45e2
++ > find "Remove one file"
+- cc34629465ff0bb4873fc0acdb8fd96c820339c2
+OK
+test13-find-err-msg:
+Testing directory: test13-find-err-msg_0
++ I commit-2-files.inc
++ # Commit two files.
++ I init-add-2-files.inc
++ I definitions.inc
++ # Standard definitions
++ D DATE "Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A status log header RE.  Captures the commit id in its sole group.
++ D COMMIT_HEAD "commit ([a-f0-9]+)[ \t]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A full log entry.  Captures the entry. Assume logs messages don't contain
++ # "==="
++ D COMMIT_LOG "(===[ ]*\ncommit [a-f0-9]+[ ]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d[ ]*\n(?:.|\n)*?(?=\Z|\n===))"
++ # An arbitrary line of text (works even with ?s)
++ D ARBLINE "[^\n]*(?=\n|\Z)"
++ # Zero or more arbitrary full lines of text.
++ D ARBLINES "(?:(?:.|\n)*(?:\n|\Z)|\A|\Z)"
++ > init
++ + f.txt wug.txt
++ + g.txt notwug.txt
++ > add g.txt
++ > add f.txt
++ > commit "Two files"
++ 
++ > rm f.txt
++ > commit "Remove one file"
++ > find "Add another file"
+- Found no commit with that message.
+OK
+test14-reset-global-log:
+Testing directory: test14-reset-global-log_0
++ I commit-2-files.inc
++ # Commit two files.
++ I init-add-2-files.inc
++ I definitions.inc
++ # Standard definitions
++ D DATE "Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A status log header RE.  Captures the commit id in its sole group.
++ D COMMIT_HEAD "commit ([a-f0-9]+)[ \t]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A full log entry.  Captures the entry. Assume logs messages don't contain
++ # "==="
++ D COMMIT_LOG "(===[ ]*\ncommit [a-f0-9]+[ ]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d[ ]*\n(?:.|\n)*?(?=\Z|\n===))"
++ # An arbitrary line of text (works even with ?s)
++ D ARBLINE "[^\n]*(?=\n|\Z)"
++ # Zero or more arbitrary full lines of text.
++ D ARBLINES "(?:(?:.|\n)*(?:\n|\Z)|\A|\Z)"
++ > init
++ + f.txt wug.txt
++ + g.txt notwug.txt
++ > add g.txt
++ > add f.txt
++ > commit "Two files"
++ 
++ D DATE1 "Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d"
++ D COMMIT_LOG "(===[ ]*\ncommit [a-f0-9]+[ ]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d) [-+](\d\d\d\d[ ]*\n(?:.|\n)*?(?=\Z|\n===))"
++ + h.txt wug.txt
++ > add h.txt
++ > commit "Add h"
++ > log
+- ===
+- commit 785e5ec18622fc426ccbd1d8d615c92864e0fed4
+- Date: Sun Jul 21 02:21:46 2024 +0300
+- Add h
+- 
+- ===
+- commit 391f6a23b10eb3c26d727f5f99f99f8843498bf4
+- Date: Sun Jul 21 02:21:46 2024 +0300
+- Two files
+- 
+- ===
+- commit f7011bb0c9d9a16990818994b29775d3593e45e2
+- Date: Thu Jan 1 02:00:00 1970 +0200
+- initial commit
+- 
++ D L1 "===
+commit 785e5ec18622fc426ccbd1d8d615c92864e0fed4
+Date: Sun Jul 21 02:21:46 2024 [-+]0300
+Add h
+"
++ D L2 "===
+commit 391f6a23b10eb3c26d727f5f99f99f8843498bf4
+Date: Sun Jul 21 02:21:46 2024 [-+]0300
+Two files
+"
++ D L3 "===
+commit f7011bb0c9d9a16990818994b29775d3593e45e2
+Date: Thu Jan 1 02:00:00 1970 [-+]0200
+initial commit
+
+"
++ > log
+- ===
+- commit 785e5ec18622fc426ccbd1d8d615c92864e0fed4
+- Date: Sun Jul 21 02:21:46 2024 +0300
+- Add h
+- 
+- ===
+- commit 391f6a23b10eb3c26d727f5f99f99f8843498bf4
+- Date: Sun Jul 21 02:21:46 2024 +0300
+- Two files
+- 
+- ===
+- commit f7011bb0c9d9a16990818994b29775d3593e45e2
+- Date: Thu Jan 1 02:00:00 1970 +0200
+- initial commit
+- 
++ D ID "391f6a23b10eb3c26d727f5f99f99f8843498bf4"
++ > reset 391f6a23b10eb3c26d727f5f99f99f8843498bf4
++ > global-log
+- ===
+- commit 391f6a23b10eb3c26d727f5f99f99f8843498bf4
+- Date: Sun Jul 21 02:21:46 2024 +0300
+- Two files
+- 
+- ===
+- commit 785e5ec18622fc426ccbd1d8d615c92864e0fed4
+- Date: Sun Jul 21 02:21:46 2024 +0300
+- Add h
+- 
+- ===
+- commit f7011bb0c9d9a16990818994b29775d3593e45e2
+- Date: Thu Jan 1 02:00:00 1970 +0200
+- initial commit
+- 
+OK
+test15-rm-branch:
+Testing directory: test15-rm-branch_0
++ I definitions.inc
++ # Standard definitions
++ D DATE "Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A status log header RE.  Captures the commit id in its sole group.
++ D COMMIT_HEAD "commit ([a-f0-9]+)[ \t]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A full log entry.  Captures the entry. Assume logs messages don't contain
++ # "==="
++ D COMMIT_LOG "(===[ ]*\ncommit [a-f0-9]+[ ]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d[ ]*\n(?:.|\n)*?(?=\Z|\n===))"
++ # An arbitrary line of text (works even with ?s)
++ D ARBLINE "[^\n]*(?=\n|\Z)"
++ # Zero or more arbitrary full lines of text.
++ D ARBLINES "(?:(?:.|\n)*(?:\n|\Z)|\A|\Z)"
++ > init
++ > branch other
++ + f.txt wug.txt
++ > add f.txt
++ > commit "File f.txt"
++ > checkout other
++ + g.txt notwug.txt
++ > add g.txt
++ > commit "File g.txt"
++ > checkout master
++ > rm-branch other
++ > checkout other
+- No such branch exists.
++ * g.txt
++ = f.txt wug.txt
+OK
+test16-checkout-overwrite-err:
+Testing directory: test16-checkout-overwrite-err_0
++ I definitions.inc
++ # Standard definitions
++ D DATE "Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A status log header RE.  Captures the commit id in its sole group.
++ D COMMIT_HEAD "commit ([a-f0-9]+)[ \t]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A full log entry.  Captures the entry. Assume logs messages don't contain
++ # "==="
++ D COMMIT_LOG "(===[ ]*\ncommit [a-f0-9]+[ ]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d[ ]*\n(?:.|\n)*?(?=\Z|\n===))"
++ # An arbitrary line of text (works even with ?s)
++ D ARBLINE "[^\n]*(?=\n|\Z)"
++ # Zero or more arbitrary full lines of text.
++ D ARBLINES "(?:(?:.|\n)*(?:\n|\Z)|\A|\Z)"
++ > init
++ > branch other
++ + f.txt wug.txt
++ + g.txt notwug.txt
++ > add g.txt
++ > add f.txt
++ > commit "Main two files"
++ E f.txt
++ E g.txt
++ > checkout other
++ + f.txt notwug.txt
++ > checkout master
+- There is an untracked file in the way; delete it, or add and commit it first.
+OK
+test17-reset-err:
+Testing directory: test17-reset-err_0
++ I commit-2-files.inc
++ # Commit two files.
++ I init-add-2-files.inc
++ I definitions.inc
++ # Standard definitions
++ D DATE "Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A status log header RE.  Captures the commit id in its sole group.
++ D COMMIT_HEAD "commit ([a-f0-9]+)[ \t]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A full log entry.  Captures the entry. Assume logs messages don't contain
++ # "==="
++ D COMMIT_LOG "(===[ ]*\ncommit [a-f0-9]+[ ]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d[ ]*\n(?:.|\n)*?(?=\Z|\n===))"
++ # An arbitrary line of text (works even with ?s)
++ D ARBLINE "[^\n]*(?=\n|\Z)"
++ # Zero or more arbitrary full lines of text.
++ D ARBLINES "(?:(?:.|\n)*(?:\n|\Z)|\A|\Z)"
++ > init
++ + f.txt wug.txt
++ + g.txt notwug.txt
++ > add g.txt
++ > add f.txt
++ > commit "Two files"
++ 
++ > branch other
++ + h.txt wug2.txt
++ > add h.txt
++ > rm g.txt
++ > commit "Add h.txt and remove g.txt"
++ > log
+- ===
+- commit 06804065af707705f1cd8cc9696118bfcf2e6c86
+- Date: Sun Jul 21 02:21:49 2024 +0300
+- Add h.txt and remove g.txt
+- 
+- ===
+- commit 542761aad5c88a59f604d2dc51e29919271f56d4
+- Date: Sun Jul 21 02:21:49 2024 +0300
+- Two files
+- 
+- ===
+- commit f7011bb0c9d9a16990818994b29775d3593e45e2
+- Date: Thu Jan 1 02:00:00 1970 +0200
+- initial commit
+- 
++ D INIT "f7011bb0c9d9a16990818994b29775d3593e45e2"
++ D TWO "542761aad5c88a59f604d2dc51e29919271f56d4"
++ D MASTER1 "06804065af707705f1cd8cc9696118bfcf2e6c86"
++ 
++ > checkout other
++ # Almost certain not to exist.
++ > reset 025052f2b193d417df998517a4c539918801b430
+- No commit with that id exists.
++ + h.txt wug3.txt
++ > reset 06804065af707705f1cd8cc9696118bfcf2e6c86
+- There is an untracked file in the way; delete it, or add and commit it first.
+OK
+test18-reset:
+Testing directory: test18-reset_0
++ I commit-2-files.inc
++ # Commit two files.
++ I init-add-2-files.inc
++ I definitions.inc
++ # Standard definitions
++ D DATE "Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A status log header RE.  Captures the commit id in its sole group.
++ D COMMIT_HEAD "commit ([a-f0-9]+)[ \t]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A full log entry.  Captures the entry. Assume logs messages don't contain
++ # "==="
++ D COMMIT_LOG "(===[ ]*\ncommit [a-f0-9]+[ ]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d[ ]*\n(?:.|\n)*?(?=\Z|\n===))"
++ # An arbitrary line of text (works even with ?s)
++ D ARBLINE "[^\n]*(?=\n|\Z)"
++ # Zero or more arbitrary full lines of text.
++ D ARBLINES "(?:(?:.|\n)*(?:\n|\Z)|\A|\Z)"
++ > init
++ + f.txt wug.txt
++ + g.txt notwug.txt
++ > add g.txt
++ > add f.txt
++ > commit "Two files"
++ 
++ > branch other
++ + h.txt wug2.txt
++ > add h.txt
++ > rm g.txt
++ > commit "Add h.txt and remove g.txt"
++ > checkout other
++ > rm f.txt
++ + k.txt wug3.txt
++ > add k.txt
++ > commit "Add k.txt and remove f.txt"
++ > log
+- ===
+- commit 4be6fcc97c89ea596c2aa93c1f0ad0896d3a1dda
+- Date: Sun Jul 21 02:21:50 2024 +0300
+- Add k.txt and remove f.txt
+- 
+- ===
+- commit 80db03b8f1191fe738730f17fdae742abd2c8276
+- Date: Sun Jul 21 02:21:50 2024 +0300
+- Two files
+- 
+- ===
+- commit f7011bb0c9d9a16990818994b29775d3593e45e2
+- Date: Thu Jan 1 02:00:00 1970 +0200
+- initial commit
+- 
++ D INIT "f7011bb0c9d9a16990818994b29775d3593e45e2"
++ D TWO "80db03b8f1191fe738730f17fdae742abd2c8276"
++ D OTHER1 "4be6fcc97c89ea596c2aa93c1f0ad0896d3a1dda"
++ 
++ > checkout master
++ > log
+- ===
+- commit 1cded70a7b913dedef5d40e6769f85e0892824bb
+- Date: Sun Jul 21 02:21:50 2024 +0300
+- Add h.txt and remove g.txt
+- 
+- ===
+- commit 80db03b8f1191fe738730f17fdae742abd2c8276
+- Date: Sun Jul 21 02:21:50 2024 +0300
+- Two files
+- 
+- ===
+- commit f7011bb0c9d9a16990818994b29775d3593e45e2
+- Date: Thu Jan 1 02:00:00 1970 +0200
+- initial commit
+- 
++ D MASTER1 "1cded70a7b913dedef5d40e6769f85e0892824bb"
++ + m.txt wug.txt
++ > add m.txt
++ > reset 80db03b8f1191fe738730f17fdae742abd2c8276
++ > status
+- === Branches ===
+- *master
+- other
+- 
+- === Staged Files ===
+- 
+- === Removed Files ===
+- 
+- === Modifications Not Staged For Commit ===
+- 
+- === Untracked Files ===
+- 
++ 
++ > log
+- ===
+- commit 80db03b8f1191fe738730f17fdae742abd2c8276
+- Date: Sun Jul 21 02:21:50 2024 +0300
+- Two files
+- 
+- ===
+- commit f7011bb0c9d9a16990818994b29775d3593e45e2
+- Date: Thu Jan 1 02:00:00 1970 +0200
+- initial commit
+- 
++ > checkout other
++ > log
+- ===
+- commit 4be6fcc97c89ea596c2aa93c1f0ad0896d3a1dda
+- Date: Sun Jul 21 02:21:50 2024 +0300
+- Add k.txt and remove f.txt
+- 
+- ===
+- commit 80db03b8f1191fe738730f17fdae742abd2c8276
+- Date: Sun Jul 21 02:21:50 2024 +0300
+- Two files
+- 
+- ===
+- commit f7011bb0c9d9a16990818994b29775d3593e45e2
+- Date: Thu Jan 1 02:00:00 1970 +0200
+- initial commit
+- 
++ > checkout master
++ > log
+- ===
+- commit 80db03b8f1191fe738730f17fdae742abd2c8276
+- Date: Sun Jul 21 02:21:50 2024 +0300
+- Two files
+- 
+- ===
+- commit f7011bb0c9d9a16990818994b29775d3593e45e2
+- Date: Thu Jan 1 02:00:00 1970 +0200
+- initial commit
+- 
++ > reset 1cded70a7b913dedef5d40e6769f85e0892824bb
++ > log
+- ===
+- commit 1cded70a7b913dedef5d40e6769f85e0892824bb
+- Date: Sun Jul 21 02:21:50 2024 +0300
+- Add h.txt and remove g.txt
+- 
+- ===
+- commit 80db03b8f1191fe738730f17fdae742abd2c8276
+- Date: Sun Jul 21 02:21:50 2024 +0300
+- Two files
+- 
+- ===
+- commit f7011bb0c9d9a16990818994b29775d3593e45e2
+- Date: Thu Jan 1 02:00:00 1970 +0200
+- initial commit
+- 
+OK
+test19-rm-branch-err:
+Testing directory: test19-rm-branch-err_0
++ I definitions.inc
++ # Standard definitions
++ D DATE "Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A status log header RE.  Captures the commit id in its sole group.
++ D COMMIT_HEAD "commit ([a-f0-9]+)[ \t]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A full log entry.  Captures the entry. Assume logs messages don't contain
++ # "==="
++ D COMMIT_LOG "(===[ ]*\ncommit [a-f0-9]+[ ]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d[ ]*\n(?:.|\n)*?(?=\Z|\n===))"
++ # An arbitrary line of text (works even with ?s)
++ D ARBLINE "[^\n]*(?=\n|\Z)"
++ # Zero or more arbitrary full lines of text.
++ D ARBLINES "(?:(?:.|\n)*(?:\n|\Z)|\A|\Z)"
++ > init
++ > branch other
++ > checkout other
++ + f.txt wug.txt
++ > add f.txt
++ > commit "File f.txt"
++ > rm-branch other
+- Cannot remove the current branch.
++ E f.txt
++ > rm-branch foo
+- A branch with that name does not exist.
+OK
+test20-merge-no-conflicts:
+Testing directory: test20-merge-no-conflicts_0
++ I commit-2-files.inc
++ # Commit two files.
++ I init-add-2-files.inc
++ I definitions.inc
++ # Standard definitions
++ D DATE "Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A status log header RE.  Captures the commit id in its sole group.
++ D COMMIT_HEAD "commit ([a-f0-9]+)[ \t]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A full log entry.  Captures the entry. Assume logs messages don't contain
++ # "==="
++ D COMMIT_LOG "(===[ ]*\ncommit [a-f0-9]+[ ]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d[ ]*\n(?:.|\n)*?(?=\Z|\n===))"
++ # An arbitrary line of text (works even with ?s)
++ D ARBLINE "[^\n]*(?=\n|\Z)"
++ # Zero or more arbitrary full lines of text.
++ D ARBLINES "(?:(?:.|\n)*(?:\n|\Z)|\A|\Z)"
++ > init
++ + f.txt wug.txt
++ + g.txt notwug.txt
++ > add g.txt
++ > add f.txt
++ > commit "Two files"
++ 
++ > branch other
++ + h.txt wug2.txt
++ > add h.txt
++ > rm g.txt
++ > commit "Add h.txt and remove g.txt"
++ > checkout other
++ > rm f.txt
++ + k.txt wug3.txt
++ > add k.txt
++ > commit "Add k.txt and remove f.txt"
++ > checkout master
++ > merge other
++ * f.txt
++ * g.txt
++ = h.txt wug2.txt
++ = k.txt wug3.txt
++ > log
+- ===
+- commit fd4f1086667e6cbb228fa3213274ead2103e0825
+- Date: Sun Jul 21 02:21:54 2024 +0300
+- Merged other into master.
+- 
+- ===
+- commit 457fd7b02baea4e82cf285186ca12c0484f0dc76
+- Date: Sun Jul 21 02:21:53 2024 +0300
+- Add h.txt and remove g.txt
+- 
+- ===
+- commit fd4dee9da9f38e08a4814b8926a291c82272c652
+- Date: Sun Jul 21 02:21:53 2024 +0300
+- Two files
+- 
+- ===
+- commit f7011bb0c9d9a16990818994b29775d3593e45e2
+- Date: Thu Jan 1 02:00:00 1970 +0200
+- initial commit
+- 
++ I blank-status2.inc
++ > status
+- === Branches ===
+- *master
+- other
+- 
+- === Staged Files ===
+- k.txt
+- 
+- === Removed Files ===
+- f.txt
+- 
+- === Modifications Not Staged For Commit ===
+- 
+- === Untracked Files ===
+- 
+ERROR (incorrect output)
+test21-merge-conflict:
+Testing directory: test21-merge-conflict_0
++ I commit-2-files.inc
++ # Commit two files.
++ I init-add-2-files.inc
++ I definitions.inc
++ # Standard definitions
++ D DATE "Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A status log header RE.  Captures the commit id in its sole group.
++ D COMMIT_HEAD "commit ([a-f0-9]+)[ \t]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A full log entry.  Captures the entry. Assume logs messages don't contain
++ # "==="
++ D COMMIT_LOG "(===[ ]*\ncommit [a-f0-9]+[ ]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d[ ]*\n(?:.|\n)*?(?=\Z|\n===))"
++ # An arbitrary line of text (works even with ?s)
++ D ARBLINE "[^\n]*(?=\n|\Z)"
++ # Zero or more arbitrary full lines of text.
++ D ARBLINES "(?:(?:.|\n)*(?:\n|\Z)|\A|\Z)"
++ > init
++ + f.txt wug.txt
++ + g.txt notwug.txt
++ > add g.txt
++ > add f.txt
++ > commit "Two files"
++ 
++ > branch other
++ + h.txt wug2.txt
++ > add h.txt
++ > rm g.txt
++ + f.txt wug2.txt
++ > add f.txt
++ > commit "Add h.txt, remove g.txt, and change f.txt"
++ > checkout other
++ + f.txt notwug.txt
++ > add f.txt
++ + k.txt wug3.txt
++ > add k.txt
++ > commit "Add k.txt and modify f.txt"
++ > checkout master
++ > log
+- ===
+- commit 3872516f90d9f7d09b3bef6a9e7b343f23934255
+- Date: Sun Jul 21 02:21:55 2024 +0300
+- Add h.txt, remove g.txt, and change f.txt
+- 
+- ===
+- commit 0b1f8a75a114f7825c3bcf6c9caa94325f96d046
+- Date: Sun Jul 21 02:21:54 2024 +0300
+- Two files
+- 
+- ===
+- commit f7011bb0c9d9a16990818994b29775d3593e45e2
+- Date: Thu Jan 1 02:00:00 1970 +0200
+- initial commit
+- 
++ D MASTER_HEAD "3872516f90d9f7d09b3bef6a9e7b343f23934255"
++ > merge other
+- Encountered a merge conflict.
++ * g.txt
++ = h.txt wug2.txt
++ = k.txt wug3.txt
++ = f.txt conflict1.txt
+ERROR (file f.txt has incorrect content)
+test22-merge-rm-conflict:
+Testing directory: test22-merge-rm-conflict_0
++ I commit-2-files.inc
++ # Commit two files.
++ I init-add-2-files.inc
++ I definitions.inc
++ # Standard definitions
++ D DATE "Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A status log header RE.  Captures the commit id in its sole group.
++ D COMMIT_HEAD "commit ([a-f0-9]+)[ \t]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A full log entry.  Captures the entry. Assume logs messages don't contain
++ # "==="
++ D COMMIT_LOG "(===[ ]*\ncommit [a-f0-9]+[ ]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d[ ]*\n(?:.|\n)*?(?=\Z|\n===))"
++ # An arbitrary line of text (works even with ?s)
++ D ARBLINE "[^\n]*(?=\n|\Z)"
++ # Zero or more arbitrary full lines of text.
++ D ARBLINES "(?:(?:.|\n)*(?:\n|\Z)|\A|\Z)"
++ > init
++ + f.txt wug.txt
++ + g.txt notwug.txt
++ > add g.txt
++ > add f.txt
++ > commit "Two files"
++ 
++ > branch other
++ + h.txt wug2.txt
++ > add h.txt
++ > rm g.txt
++ + f.txt wug2.txt
++ > add f.txt
++ > commit "Add h.txt, remove g.txt, and change f.txt"
++ > checkout other
++ > rm f.txt
++ + k.txt wug3.txt
++ > add k.txt
++ > commit "Add k.txt and remove f.txt"
++ > checkout master
++ > log
+- ===
+- commit 2efdebf95e53c3f9d65d58c93635e046a126ebd4
+- Date: Sun Jul 21 02:21:56 2024 +0300
+- Add h.txt, remove g.txt, and change f.txt
+- 
+- ===
+- commit 2ba7d5394e3aaa09e7c943828a935510f30e0478
+- Date: Sun Jul 21 02:21:56 2024 +0300
+- Two files
+- 
+- ===
+- commit f7011bb0c9d9a16990818994b29775d3593e45e2
+- Date: Thu Jan 1 02:00:00 1970 +0200
+- initial commit
+- 
++ D MASTER_HEAD "2efdebf95e53c3f9d65d58c93635e046a126ebd4"
++ > merge other
+- Encountered a merge conflict.
++ * g.txt
++ = h.txt wug2.txt
++ = k.txt wug3.txt
++ = f.txt conflict2.txt
+ERROR (file f.txt has incorrect content)
+test23-merge-parent:
+Testing directory: test23-merge-parent_0
++ I definitions.inc
++ # Standard definitions
++ D DATE "Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A status log header RE.  Captures the commit id in its sole group.
++ D COMMIT_HEAD "commit ([a-f0-9]+)[ \t]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A full log entry.  Captures the entry. Assume logs messages don't contain
++ # "==="
++ D COMMIT_LOG "(===[ ]*\ncommit [a-f0-9]+[ ]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d[ ]*\n(?:.|\n)*?(?=\Z|\n===))"
++ # An arbitrary line of text (works even with ?s)
++ D ARBLINE "[^\n]*(?=\n|\Z)"
++ # Zero or more arbitrary full lines of text.
++ D ARBLINES "(?:(?:.|\n)*(?:\n|\Z)|\A|\Z)"
++ > init
++ > branch B1
++ > branch B2
++ > checkout B1
++ + h.txt wug.txt
++ > add h.txt
++ > commit "Add h.txt"
++ > checkout B2
++ + f.txt wug.txt
++ > add f.txt
++ > commit "f.txt added"
++ > branch C1
++ + g.txt notwug.txt
++ > add g.txt
++ > rm f.txt
++ > commit "g.txt added, f.txt removed"
++ = g.txt notwug.txt
++ * f.txt
++ * h.txt
++ > checkout B1
++ = h.txt wug.txt
++ * f.txt
++ * g.txt
++ > merge C1
++ = f.txt wug.txt
++ = h.txt wug.txt
++ * g.txt
++ > merge B2
+- You have uncommitted changes.
+ERROR (incorrect output)
+test24-godly-split:
+Testing directory: test24-godly-split_0
++ I commit-2-files.inc
++ # Commit two files.
++ I init-add-2-files.inc
++ I definitions.inc
++ # Standard definitions
++ D DATE "Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A status log header RE.  Captures the commit id in its sole group.
++ D COMMIT_HEAD "commit ([a-f0-9]+)[ \t]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A full log entry.  Captures the entry. Assume logs messages don't contain
++ # "==="
++ D COMMIT_LOG "(===[ ]*\ncommit [a-f0-9]+[ ]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d[ ]*\n(?:.|\n)*?(?=\Z|\n===))"
++ # An arbitrary line of text (works even with ?s)
++ D ARBLINE "[^\n]*(?=\n|\Z)"
++ # Zero or more arbitrary full lines of text.
++ D ARBLINES "(?:(?:.|\n)*(?:\n|\Z)|\A|\Z)"
++ > init
++ + f.txt wug.txt
++ + g.txt notwug.txt
++ > add g.txt
++ > add f.txt
++ > commit "Two files"
++ 
++ > branch other
++ + h.txt wug2.txt
++ > add h.txt
++ > commit "Added h.txt"
++ > checkout other
++ > rm f.txt
++ > commit "Removed f.txt"
++ * f.txt
++ E g.txt
++ > branch godlyOther
++ + k.txt wug3.txt
++ > add k.txt
++ > commit "Added k.txt"
++ > checkout master
++ > merge other
++ > status
+- === Branches ===
+- godlyOther
+- *master
+- other
+- 
+- === Staged Files ===
+- k.txt
+- 
+- === Removed Files ===
+- f.txt
+- g.txt
+- 
+- === Modifications Not Staged For Commit ===
+- 
+- === Untracked Files ===
+- 
+ERROR (incorrect output)
+test25-devily-split:
+Testing directory: test25-devily-split_0
++ I commit-2-files.inc
++ # Commit two files.
++ I init-add-2-files.inc
++ I definitions.inc
++ # Standard definitions
++ D DATE "Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A status log header RE.  Captures the commit id in its sole group.
++ D COMMIT_HEAD "commit ([a-f0-9]+)[ \t]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A full log entry.  Captures the entry. Assume logs messages don't contain
++ # "==="
++ D COMMIT_LOG "(===[ ]*\ncommit [a-f0-9]+[ ]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d[ ]*\n(?:.|\n)*?(?=\Z|\n===))"
++ # An arbitrary line of text (works even with ?s)
++ D ARBLINE "[^\n]*(?=\n|\Z)"
++ # Zero or more arbitrary full lines of text.
++ D ARBLINES "(?:(?:.|\n)*(?:\n|\Z)|\A|\Z)"
++ > init
++ + f.txt wug.txt
++ + g.txt notwug.txt
++ > add g.txt
++ > add f.txt
++ > commit "Two files"
++ 
++ > branch other
++ + h.txt wug2.txt
++ > add h.txt
++ > rm g.txt
++ > commit "Added h.txt and removed g.txt"
++ > checkout other
++ > rm f.txt
++ > commit "Removed f.txt"
++ * f.txt
++ E g.txt
++ > checkout master
++ > merge other
++ * f.txt
++ * g.txt
++ E h.txt
++ = h.txt wug2.txt
++ > branch devilBranch
++ + k.txt notwug.txt
++ > add k.txt
++ > commit "Added k.txt"
++ > checkout devilBranch
++ + a.txt wug.txt
++ > add a.txt
++ > commit "Added a.txt"
++ > checkout master
++ > merge devilBranch
++ * f.txt
++ * g.txt
++ E h.txt
+ERROR (file or directory h.txt not present)
+test26-gg:
+Testing directory: test26-gg_0
++ I commit-2-files.inc
++ # Commit two files.
++ I init-add-2-files.inc
++ I definitions.inc
++ # Standard definitions
++ D DATE "Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A status log header RE.  Captures the commit id in its sole group.
++ D COMMIT_HEAD "commit ([a-f0-9]+)[ \t]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A full log entry.  Captures the entry. Assume logs messages don't contain
++ # "==="
++ D COMMIT_LOG "(===[ ]*\ncommit [a-f0-9]+[ ]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d[ ]*\n(?:.|\n)*?(?=\Z|\n===))"
++ # An arbitrary line of text (works even with ?s)
++ D ARBLINE "[^\n]*(?=\n|\Z)"
++ # Zero or more arbitrary full lines of text.
++ D ARBLINES "(?:(?:.|\n)*(?:\n|\Z)|\A|\Z)"
++ > init
++ + f.txt wug.txt
++ + g.txt notwug.txt
++ > add g.txt
++ > add f.txt
++ > commit "Two files"
++ 
++ > branch other
++ + h.txt wug2.txt
++ > add h.txt
++ > rm g.txt
++ > commit "Added h.txt and removed g.txt"
++ > checkout other
++ > rm f.txt
++ > commit "Removed f.txt"
++ * f.txt
++ E g.txt
++ > checkout master
++ > merge other
++ * f.txt
++ * g.txt
++ E h.txt
++ = h.txt wug2.txt
++ > checkout other
++ + f.txt wug3.txt
++ > add f.txt
++ > commit "Added f.txt back"
++ > checkout master
++ > merge other
++ * g.txt
++ E h.txt
++ = h.txt wug2.txt
++ E f.txt
++ = f.txt wug3.txt
+OK
+test27-mmsp:
+Testing directory: test27-mmsp_0
++ I commit-2-files.inc
++ # Commit two files.
++ I init-add-2-files.inc
++ I definitions.inc
++ # Standard definitions
++ D DATE "Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A status log header RE.  Captures the commit id in its sole group.
++ D COMMIT_HEAD "commit ([a-f0-9]+)[ \t]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A full log entry.  Captures the entry. Assume logs messages don't contain
++ # "==="
++ D COMMIT_LOG "(===[ ]*\ncommit [a-f0-9]+[ ]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d[ ]*\n(?:.|\n)*?(?=\Z|\n===))"
++ # An arbitrary line of text (works even with ?s)
++ D ARBLINE "[^\n]*(?=\n|\Z)"
++ # Zero or more arbitrary full lines of text.
++ D ARBLINES "(?:(?:.|\n)*(?:\n|\Z)|\A|\Z)"
++ > init
++ + f.txt wug.txt
++ + g.txt notwug.txt
++ > add g.txt
++ > add f.txt
++ > commit "Two files"
++ 
++ > branch other
++ + h.txt wug2.txt
++ > add h.txt
++ > commit "Added h.txt"
++ > checkout other
++ > rm f.txt
++ > commit "Removed f.txt"
++ * f.txt
++ E g.txt
++ > branch godlyOther
++ + k.txt wug3.txt
++ > add k.txt
++ > commit "Added k.txt"
++ > merge master
++ > status
+- === Branches ===
+- godlyOther
+- master
+- *other
+- 
+- === Staged Files ===
+- h.txt
+- 
+- === Removed Files ===
+- g.txt
+- 
+- === Modifications Not Staged For Commit ===
+- 
+- === Untracked Files ===
+- 
+ERROR (incorrect output)
+test28-final:
+Testing directory: test28-final_0
++ I commit-2-files.inc
++ # Commit two files.
++ I init-add-2-files.inc
++ I definitions.inc
++ # Standard definitions
++ D DATE "Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A status log header RE.  Captures the commit id in its sole group.
++ D COMMIT_HEAD "commit ([a-f0-9]+)[ \t]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A full log entry.  Captures the entry. Assume logs messages don't contain
++ # "==="
++ D COMMIT_LOG "(===[ ]*\ncommit [a-f0-9]+[ ]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d[ ]*\n(?:.|\n)*?(?=\Z|\n===))"
++ # An arbitrary line of text (works even with ?s)
++ D ARBLINE "[^\n]*(?=\n|\Z)"
++ # Zero or more arbitrary full lines of text.
++ D ARBLINES "(?:(?:.|\n)*(?:\n|\Z)|\A|\Z)"
++ > init
++ + f.txt wug.txt
++ + g.txt notwug.txt
++ > add g.txt
++ > add f.txt
++ > commit "Two files"
++ 
++ > branch other
++ > branch nextOther
++ > rm f.txt
++ > commit "Removed f.txt"
++ > merge other
+- Given branch is an ancestor of the current branch.
++ > checkout nextOther
++ > rm g.txt
++ > commit "Removed g.txt"
++ > checkout other
++ > merge nextOther
+- Current branch fast-forwarded.
+OK
+test29-dandaryilar:
+Testing directory: test29-dandaryilar_0
++ I commit-2-files.inc
++ # Commit two files.
++ I init-add-2-files.inc
++ I definitions.inc
++ # Standard definitions
++ D DATE "Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A status log header RE.  Captures the commit id in its sole group.
++ D COMMIT_HEAD "commit ([a-f0-9]+)[ \t]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A full log entry.  Captures the entry. Assume logs messages don't contain
++ # "==="
++ D COMMIT_LOG "(===[ ]*\ncommit [a-f0-9]+[ ]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d[ ]*\n(?:.|\n)*?(?=\Z|\n===))"
++ # An arbitrary line of text (works even with ?s)
++ D ARBLINE "[^\n]*(?=\n|\Z)"
++ # Zero or more arbitrary full lines of text.
++ D ARBLINES "(?:(?:.|\n)*(?:\n|\Z)|\A|\Z)"
++ > init
++ + f.txt wug.txt
++ + g.txt notwug.txt
++ > add g.txt
++ > add f.txt
++ > commit "Two files"
++ 
++ > branch other
++ > rm f.txt
++ > rm g.txt
++ + h.txt wug2.txt
++ > add h.txt
++ > commit "Removed both files and added h.txt"
++ > branch danDarYiLar
++ > rm h.txt
++ > commit "Removed h.txt too :V"
++ > checkout other
++ + f.txt notwug.txt
++ > add f.txt
++ > rm g.txt
++ > commit "Removed g.txt and fixed f.txt"
++ > checkout danDarYiLar
++ > merge other
+- Encountered a merge conflict.
++ E h.txt
++ E f.txt
++ = h.txt wug2.txt
++ = f.txt conflict3.txt
+ERROR (file f.txt has incorrect content)
+test30-final-bug:
+Testing directory: test30-final-bug_0
++ I commit-2-files.inc
++ # Commit two files.
++ I init-add-2-files.inc
++ I definitions.inc
++ # Standard definitions
++ D DATE "Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A status log header RE.  Captures the commit id in its sole group.
++ D COMMIT_HEAD "commit ([a-f0-9]+)[ \t]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d"
++ # A full log entry.  Captures the entry. Assume logs messages don't contain
++ # "==="
++ D COMMIT_LOG "(===[ ]*\ncommit [a-f0-9]+[ ]*\n(?:Merge:\s+[0-9a-f]{7}\s+[0-9a-f]{7}[ ]*\n)?Date: \w\w\w \w\w\w \d+ \d\d:\d\d:\d\d \d\d\d\d [-+]\d\d\d\d[ ]*\n(?:.|\n)*?(?=\Z|\n===))"
++ # An arbitrary line of text (works even with ?s)
++ D ARBLINE "[^\n]*(?=\n|\Z)"
++ # Zero or more arbitrary full lines of text.
++ D ARBLINES "(?:(?:.|\n)*(?:\n|\Z)|\A|\Z)"
++ > init
++ + f.txt wug.txt
++ + g.txt notwug.txt
++ > add g.txt
++ > add f.txt
++ > commit "Two files"
++ 
++ > branch other
++ > rm f.txt
++ > rm g.txt
++ + h.txt wug2.txt
++ > add h.txt
++ > commit "Removed both files and added h.txt"
++ > branch danDarYiLar
++ > rm h.txt
++ > commit "Removed h.txt too :V"
++ > checkout other
++ + f.txt notwug.txt
++ > add f.txt
++ > rm g.txt
++ > commit "Removed g.txt and fixed f.txt"
++ > branch legendary
++ > rm f.txt
++ > commit "Removed fixed f.txt"
++ > checkout danDarYiLar
++ > merge legendary
+- Encountered a merge conflict.
++ E h.txt
++ E f.txt
++ = h.txt wug2.txt
++ = f.txt conflict3.txt
+ERROR (file f.txt has incorrect content)
+
+Ran 30 tests. 21 passed.
+make[1]: Leaving directory '/home/agx/Desktop/CS61B/CS61B/proj2/testing'
